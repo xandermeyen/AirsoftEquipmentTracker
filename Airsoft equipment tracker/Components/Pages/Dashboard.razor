@@ -1,0 +1,95 @@
+﻿@page "/"
+
+@using Airsoft_equipment_tracker.Models
+@inject Airsoft_equipment_tracker.Services.MockEquipmentService EquipmentService
+
+<h1 class="mb-4">Dashboard</h1>
+
+<div class="row g-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Total Items</h5>
+                <p class="card-text fs-3 fw-bold">@equipment.Count</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Total Value</h5>
+                <p class="card-text fs-3 fw-bold">€@totalValue</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Primary Replicas</h5>
+                <p class="card-text fs-3 fw-bold">@primaryCount</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Secondary Replicas</h5>
+                <p class="card-text fs-3 fw-bold">@secondaryCount</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-5">
+    <h2 class="mb-3">Recent Equipment</h2>
+
+    @if (recentEquipment.Any())
+    {
+        <div class="row g-4">
+            @foreach (var item in recentEquipment)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">@item.Name</h5>
+                            <p class="card-text mb-1"><strong>Brand:</strong> @item.Brand?.Name</p>
+                            <p class="card-text mb-1"><strong>Category:</strong> @item.Category?.Name</p>
+                            <p class="card-text mb-1"><strong>Price:</strong> €@item.Price</p>
+                            <p class="card-text"><strong>Purchase Date:</strong> @item.PurchaseDate.ToShortDateString()</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>No equipment found.</p>
+    }
+</div>
+
+@code {
+    private List<EquipmentItem> equipment = new();
+
+    private decimal totalValue;
+    private int primaryCount;
+    private int secondaryCount;
+    private List<EquipmentItem> recentEquipment = new();
+
+    protected override void OnInitialized()
+    {
+        equipment = EquipmentService.GetEquipment();
+
+        totalValue = equipment.Sum(x => x.Price);
+        primaryCount = equipment.Count(x => x.Category?.Name == "Primary");
+        secondaryCount = equipment.Count(x => x.Category?.Name == "Secondary");
+
+        recentEquipment = equipment
+            .OrderByDescending(x => x.PurchaseDate)
+            .Take(3)
+            .ToList();
+    }
+}

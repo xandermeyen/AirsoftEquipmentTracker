@@ -1,0 +1,24 @@
+﻿@page "/equipment"
+
+@using Airsoft_equipment_tracker.Models
+@inject Airsoft_equipment_tracker.Services.MockEquipmentService EquipmentService
+
+<h1>My Equipment</h1>
+
+<ul>
+    @foreach (var item in equipment)
+    {
+        <li>
+            <b>@item.Name</b> - @item.Brand?.Name - €@item.Price
+        </li>
+    }
+</ul>
+
+@code {
+    private List<EquipmentItem> equipment = new();
+
+    protected override void OnInitialized()
+    {
+        equipment = EquipmentService.GetEquipment();
+    }
+}

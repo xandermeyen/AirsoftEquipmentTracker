@@ -1,10 +1,13 @@
 using Airsoft_equipment_tracker.Components;
+using Airsoft_equipment_tracker.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddSingleton<MockEquipmentService>();
 
 var app = builder.Build();
 

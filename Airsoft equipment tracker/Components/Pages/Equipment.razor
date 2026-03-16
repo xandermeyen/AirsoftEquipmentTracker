@@ -3,16 +3,41 @@
 @using Airsoft_equipment_tracker.Models
 @inject Airsoft_equipment_tracker.Services.MockEquipmentService EquipmentService
 
-<h1>My Equipment</h1>
+<h1 class="mb-2">Equipment</h1>
+<p class="text-muted mb-4">Overview of your airsoft replicas, gear, and other tracked items.</p>
 
-<ul>
-    @foreach (var item in equipment)
-    {
-        <li>
-            <b>@item.Name</b> - @item.Brand?.Name - €@item.Price
-        </li>
-    }
-</ul>
+@if (equipment.Any())
+{
+    <div class="row g-4">
+        @foreach (var item in equipment)
+        {
+            <div class="col-md-6 col-xl-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">@item.Name</h5>
+                        <p class="card-text mb-1"><strong>Brand:</strong> @item.Brand?.Name</p>
+                        <p class="card-text mb-1"><strong>Category:</strong> @item.Category?.Name</p>
+                        <p class="card-text mb-1"><strong>Price:</strong> €@item.Price</p>
+                        <p class="card-text mb-1"><strong>Purchase Date:</strong> @item.PurchaseDate.ToShortDateString()</p>
+
+                        @if (!string.IsNullOrWhiteSpace(item.Notes))
+                        {
+                            <p class="card-text mt-3">
+                                <strong>Notes:</strong> @item.Notes
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        No equipment found.
+    </div>
+}
 
 @code {
     private List<EquipmentItem> equipment = new();

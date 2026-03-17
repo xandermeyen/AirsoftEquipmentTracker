@@ -11,9 +11,10 @@
     <label for="category" class="form-label">Filter by category</label>
     <select id="category" class="form-select" @bind="selectedCategory">
         <option value="All">All</option>
-        <option value="Primary">Primary</option>
-        <option value="Secondary">Secondary</option>
-        <option value="Gear">Gear</option>
+        @foreach (var category in Categories)
+        {
+            <option value="@category">@category</option>
+        }
     </select>
 </div>
 
@@ -61,6 +62,14 @@ else
         selectedCategory == "All"
             ? equipment
             : equipment.Where(item => item.Category?.Name == selectedCategory);
+    
+    // Returns all unique category names from the equipment list,
+    // excluding empty values and sorting them alphabetically.
+    private IEnumerable<string> Categories => equipment
+        .Select(item => item.Category?.Name)
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Distinct()
+        .OrderBy(name => name)!;
 
     protected override void OnInitialized()
     {

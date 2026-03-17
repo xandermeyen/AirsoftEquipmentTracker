@@ -1,0 +1,109 @@
+﻿@page "/equipment/add"
+@rendermode InteractiveServer
+
+@using Airsoft_equipment_tracker.Models
+@using Airsoft_equipment_tracker.Services
+@inject NavigationManager Navigation
+@inject MockEquipmentService EquipmentService
+
+<PageTitle>Add Equipment</PageTitle>
+
+<h1 class="mb-2">Add Equipment</h1>
+<p class="text-muted mb-4">Add a new item to your airsoft equipment tracker.</p>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <EditForm Model="newItem" OnValidSubmit="HandleSubmit">
+            <div class="row g-4">
+
+                <div class="col-md-6">
+                    <label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="newItem.Name" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Price</label>
+                    <InputNumber class="form-control" @bind-Value="newItem.Price" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Brand</label>
+                    @* We bind this input to a separate string first,
+                       then create a Brand object when saving. *@
+                    <InputText class="form-control" @bind-Value="brandName" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Category</label>
+                    @* Same idea here: the EquipmentItem model stores a Category object,
+                       but the form starts with simple text input for easier entry. *@
+                    <InputText class="form-control" @bind-Value="categoryName" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Purchase Date</label>
+                    <InputDate class="form-control" @bind-Value="newItem.PurchaseDate" />
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Notes</label>
+                    <InputTextArea class="form-control" rows="4" @bind-Value="newItem.Notes" />
+                </div>
+
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-dark">Save Equipment</button>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="GoBack">
+                        Cancel
+                    </button>
+                </div>
+
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@if (isSaved)
+{
+    <div class="alert alert-success mt-4">
+        Equipment item saved successfully.
+    </div>
+}
+
+@code {
+    private EquipmentItem newItem = new()
+    {
+        PurchaseDate = DateTime.Today
+    };
+
+    // These are temporary text fields for Brand and Category.
+    // Later, these could become dropdowns or separate linked entities from a database.
+    private string brandName = string.Empty;
+    private string categoryName = string.Empty;
+
+    private bool isSaved = false;
+
+    private void HandleSubmit()
+    {
+        // The EquipmentItem model expects Brand and Category objects,
+        // so we create them here from the entered text values.
+        newItem.Brand = new Brand
+        {
+            Id = 0,
+            Name = brandName
+        };
+
+        newItem.Category = new Category
+        {
+            Id = 0,
+            Name = categoryName
+        };
+
+        EquipmentService.AddEquipment(newItem);
+        Navigation.NavigateTo("/equipment");
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/equipment");
+    }
+}

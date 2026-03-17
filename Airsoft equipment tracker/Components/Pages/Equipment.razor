@@ -7,6 +7,10 @@
 <h1 class="mb-2">Equipment</h1>
 <p class="text-muted mb-4">Overview of your airsoft replicas, gear, and other tracked items.</p>
 
+<a class="btn btn-dark mb-4" href="/equipment/add">
+    Add New Equipment
+</a>
+
 <div class="mb-4">
     <label for="category" class="form-label">Filter by category</label>
     <select id="category" class="form-select" @bind="selectedCategory">
@@ -51,28 +55,28 @@ else
     </div>
 }
 
-@code {
-    private List<EquipmentItem> equipment = new();
-    private string selectedCategory = "All";
+    @code {
+        private List<EquipmentItem> equipment = new();
+        private string selectedCategory = "All";
 
-    // Returns the list of equipment filtered by the selected category.
-    // If "All" is selected, the full equipment list is returned.
-    // Otherwise, only items whose Category.Name matches the selected category are included.
-    private IEnumerable<EquipmentItem> FilteredEquipment =>
-        selectedCategory == "All"
-            ? equipment
-            : equipment.Where(item => item.Category?.Name == selectedCategory);
-    
-    // Returns all unique category names from the equipment list,
-    // excluding empty values and sorting them alphabetically.
-    private IEnumerable<string> Categories => equipment
-        .Select(item => item.Category?.Name)
-        .Where(name => !string.IsNullOrWhiteSpace(name))
-        .Distinct()
-        .OrderBy(name => name)!;
+        // Returns the list of equipment filtered by the selected category.
+        // If "All" is selected, the full equipment list is returned.
+        // Otherwise, only items whose Category.Name matches the selected category are included.
+        private IEnumerable<EquipmentItem> FilteredEquipment =>
+            selectedCategory == "All"
+                ? equipment
+                : equipment.Where(item => item.Category?.Name == selectedCategory);
 
-    protected override void OnInitialized()
-    {
-        equipment = EquipmentService.GetEquipment();
-    }
+        // Returns all unique category names from the equipment list,
+        // excluding empty values and sorting them alphabetically.
+        private IEnumerable<string> Categories => equipment
+            .Select(item => item.Category?.Name)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct()
+            .OrderBy(name => name)!;
+
+        protected override void OnInitialized()
+        {
+            equipment = EquipmentService.GetEquipment();
+        }
 }

@@ -4,10 +4,8 @@ namespace Airsoft_equipment_tracker.Services;
 
 public class MockEquipmentService
 {
-    public List<EquipmentItem> GetEquipment()
+    private List<EquipmentItem> _equipment = new List<EquipmentItem>
     {
-        return new List<EquipmentItem>
-        {
             new EquipmentItem
             {
                 Id = 1,
@@ -18,7 +16,6 @@ public class MockEquipmentService
                 Category = new Category { Id = 1, Name = "Primary" },
                 Notes = "Main outdoor replica"
             },
-
             new EquipmentItem
             {
                 Id = 2,
@@ -95,6 +92,17 @@ public class MockEquipmentService
                 Category = new Category { Id = 7, Name = "Consumable" },
                 Notes = "Outdoor BBs"
             }
-        };
+
+    };
+
+    public List<EquipmentItem> GetEquipment()
+    {
+        return _equipment;
+    }
+
+    public void AddEquipment(EquipmentItem item)
+    {
+        item.Id = _equipment.Any() ? _equipment.Max(x => x.Id) + 1 : 1;
+        _equipment.Add(item);
     }
 }

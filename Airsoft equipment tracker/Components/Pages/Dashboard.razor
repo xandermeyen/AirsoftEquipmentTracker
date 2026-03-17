@@ -1,50 +1,74 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 
+@using System.Linq
+@using System.Globalization
 @using Airsoft_equipment_tracker.Models
 @inject Airsoft_equipment_tracker.Services.MockEquipmentService EquipmentService
+@inject NavigationManager Navigation
 
-<h1 class="mb-4">Dashboard</h1>
+<PageTitle>Dashboard</PageTitle>
 
-<div class="row g-4">
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">Dashboard</h1>
+        <p class="text-muted mb-0">Overview of your airsoft equipment and recent additions.</p>
+    </div>
+
+    <button class="btn btn-dark" @onclick="GoToEquipment">
+        View Equipment
+    </button>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-6 col-xl-4">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <h5 class="card-title">Total Items</h5>
-                <p class="card-text fs-3 fw-bold">@equipment.Count</p>
+                <p class="text-muted mb-2">📦 Total Items</p>
+                <h2 class="fw-bold mb-0">@equipment.Count</h2>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm">
+    <div class="col-md-6 col-xl-4">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <h5 class="card-title">Total Value</h5>
-                <p class="card-text fs-3 fw-bold">€@totalValue</p>
+                <p class="text-muted mb-2">💰 Total Value</p>
+                <h2 class="fw-bold mb-0">€ @totalValue.ToString("0.00")</h2>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm">
+    <div class="col-md-6 col-xl-4">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <h5 class="card-title">Primary Replicas</h5>
-                <p class="card-text fs-3 fw-bold">@primaryCount</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6 col-xl-3">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Secondary Replicas</h5>
-                <p class="card-text fs-3 fw-bold">@secondaryCount</p>
+                <p class="text-muted mb-2">🗂️ Categories Used</p>
+                <h2 class="fw-bold mb-0">@categoryCount</h2>
             </div>
         </div>
     </div>
 </div>
 
-<div class="mt-5">
-    <h2 class="mb-3">Recent Equipment</h2>
+<div class="mb-5">
+    <h3 class="mb-3">Category Breakdown</h3>
+
+    <div class="row g-4">
+        @foreach (var category in categoryBreakdown)
+        {
+            <div class="col-md-6 col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <p class="text-muted mb-2">@GetCategoryIcon(category.Name) @category.Name</p>
+                        <h3 class="fw-bold mb-0">@category.Count</h3>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div>
+    <h3 class="mb-3">Recent Items</h3>
 
     @if (recentEquipment.Any())
     {
@@ -52,13 +76,32 @@
             @foreach (var item in recentEquipment)
             {
                 <div class="col-md-6 col-xl-4">
-                    <div class="card h-100 shadow-sm">
+                    <div class="card border-0 shadow-sm h-100">
                         <div class="card-body">
-                            <h5 class="card-title">@item.Name</h5>
-                            <p class="card-text mb-1"><strong>Brand:</strong> @item.Brand?.Name</p>
-                            <p class="card-text mb-1"><strong>Category:</strong> @item.Category?.Name</p>
-                            <p class="card-text mb-1"><strong>Price:</strong> €@item.Price</p>
-                            <p class="card-text"><strong>Purchase Date:</strong> @item.PurchaseDate.ToShortDateString()</p>
+
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0">@item.Name</h5>
+                                <span class="badge text-bg-dark">@item.Category?.Name</span>
+                            </div>
+
+                            <p class="card-text mb-1">
+                                <strong>Brand:</strong> @item.Brand?.Name
+                            </p>
+
+                            <p class="card-text mb-1">
+                                <strong>Price:</strong> € @item.Price.ToString("0.00")
+                            </p>
+
+                            <p class="card-text mb-2">
+                                <strong>Purchased:</strong>
+                                @item.PurchaseDate.ToString("d", CultureInfo.GetCultureInfo("nl-BE"))
+                            </p>
+
+                            @if (!string.IsNullOrWhiteSpace(item.Notes))
+                            {
+                                <p class="card-text text-muted mb-0">@item.Notes</p>
+                            }
+
                         </div>
                     </div>
                 </div>
@@ -67,29 +110,76 @@
     }
     else
     {
-        <p>No equipment found.</p>
+        <div class="alert alert-info">
+            No recent equipment found.
+        </div>
     }
 </div>
 
 @code {
+
     private List<EquipmentItem> equipment = new();
 
     private decimal totalValue;
-    private int primaryCount;
-    private int secondaryCount;
+
+    private int categoryCount;
+
     private List<EquipmentItem> recentEquipment = new();
+
+    private List<CategoryStat> categoryBreakdown = new();
 
     protected override void OnInitialized()
     {
         equipment = EquipmentService.GetEquipment();
 
         totalValue = equipment.Sum(x => x.Price);
-        primaryCount = equipment.Count(x => x.Category?.Name == "Primary");
-        secondaryCount = equipment.Count(x => x.Category?.Name == "Secondary");
+
+        categoryCount = equipment
+            .Select(x => x.Category?.Name)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct()
+            .Count();
 
         recentEquipment = equipment
             .OrderByDescending(x => x.PurchaseDate)
             .Take(3)
             .ToList();
+
+        categoryBreakdown = equipment
+            .Where(x => !string.IsNullOrWhiteSpace(x.Category?.Name))
+            .GroupBy(x => x.Category!.Name)
+            .Select(group => new CategoryStat
+            {
+                Name = group.Key,
+                Count = group.Count()
+            })
+            .OrderBy(x => x.Name)
+            .ToList();
     }
+
+    private void GoToEquipment()
+    {
+        Navigation.NavigateTo("/equipment");
+    }
+
+    private string GetCategoryIcon(string categoryName)
+    {
+        return categoryName switch
+        {
+            "Primary" => "🎯",
+            "Secondary" => "🔫",
+            "Gear" => "🎒",
+            "Attachment" => "🔧",
+            "Magazine" => "📦",
+            "Consumable" => "🧪",
+            _ => "📁"
+        };
+    }
+
+    private class CategoryStat
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
+
 }

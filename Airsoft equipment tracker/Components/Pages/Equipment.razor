@@ -1,4 +1,5 @@
 ﻿@page "/equipment"
+@rendermode InteractiveServer
 
 @using Airsoft_equipment_tracker.Models
 @inject Airsoft_equipment_tracker.Services.MockEquipmentService EquipmentService
@@ -6,10 +7,20 @@
 <h1 class="mb-2">Equipment</h1>
 <p class="text-muted mb-4">Overview of your airsoft replicas, gear, and other tracked items.</p>
 
-@if (equipment.Any())
+<div class="mb-4">
+    <label for="category" class="form-label">Filter by category</label>
+    <select id="category" class="form-select" @bind="selectedCategory">
+        <option value="All">All</option>
+        <option value="Primary">Primary</option>
+        <option value="Secondary">Secondary</option>
+        <option value="Gear">Gear</option>
+    </select>
+</div>
+
+@if (FilteredEquipment.Any())
 {
     <div class="row g-4">
-        @foreach (var item in equipment)
+        @foreach (var item in FilteredEquipment)
         {
             <div class="col-md-6 col-xl-4">
                 <div class="card h-100 shadow-sm">
@@ -35,12 +46,21 @@
 else
 {
     <div class="alert alert-info">
-        No equipment found.
+        No equipment found for this category.
     </div>
 }
 
 @code {
     private List<EquipmentItem> equipment = new();
+    private string selectedCategory = "All";
+
+    // Returns the list of equipment filtered by the selected category.
+    // If "All" is selected, the full equipment list is returned.
+    // Otherwise, only items whose Category.Name matches the selected category are included.
+    private IEnumerable<EquipmentItem> FilteredEquipment =>
+        selectedCategory == "All"
+            ? equipment
+            : equipment.Where(item => item.Category?.Name == selectedCategory);
 
     protected override void OnInitialized()
     {

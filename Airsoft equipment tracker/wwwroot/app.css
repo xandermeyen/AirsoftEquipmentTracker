@@ -58,3 +58,40 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* Equipment Card */
+.equipment-card {
+    border-radius: 12px;
+    background: #ffffff;
+    cursor: pointer;
+    /* Base shadow */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    /* Smooth animation */
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+    /* Hover effect */
+    .equipment-card:hover {
+        transform: translateY(-6px) scale(1.01);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+    }
+
+    /* Click (active) effect */
+    .equipment-card:active {
+        transform: translateY(-2px) scale(0.99);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    }
+
+/* Hint text (bv. "View details →") */
+.card-hint {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 8px;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+/* Hint animatie bij hover */
+.equipment-card:hover .card-hint {
+    transform: translateX(5px);
+    color: #555;
+}

@@ -28,7 +28,7 @@
         @foreach (var item in FilteredEquipment)
         {
             <div class="col-md-6 col-xl-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card equipment-card h-100">
                     <div class="card-body">
                         <h5 class="card-title">@item.Name</h5>
                         <p class="card-text mb-1"><strong>Brand:</strong> @item.Brand?.Name</p>
@@ -42,6 +42,8 @@
                                 <strong>Notes:</strong> @item.Notes
                             </p>
                         }
+
+                        <div class="card-hint">View details →</div>
                     </div>
                 </div>
             </div>

@@ -2,56 +2,72 @@
 @rendermode InteractiveServer
 
 @using Airsoft_equipment_tracker.Models
-@using Airsoft_equipment_tracker.Services
+@inject Airsoft_equipment_tracker.Services.MockEquipmentService EquipmentService
 @inject NavigationManager Navigation
-@inject MockEquipmentService EquipmentService
-
-<PageTitle>Add Equipment</PageTitle>
 
 <h1 class="mb-2">Add Equipment</h1>
 <p class="text-muted mb-4">Add a new item to your airsoft equipment tracker.</p>
 
 <div class="card border-0 shadow-sm">
     <div class="card-body">
+
         <EditForm Model="newItem" OnValidSubmit="HandleSubmit">
             <div class="row g-4">
 
+                <!-- Name -->
                 <div class="col-md-6">
                     <label class="form-label">Name</label>
                     <InputText class="form-control" @bind-Value="newItem.Name" />
                 </div>
 
+                <!-- Price -->
                 <div class="col-md-6">
                     <label class="form-label">Price</label>
                     <InputNumber class="form-control" @bind-Value="newItem.Price" />
                 </div>
 
+                <!-- Brand dropdown -->
                 <div class="col-md-6">
                     <label class="form-label">Brand</label>
-                    @* We bind this input to a separate string first,
-                       then create a Brand object when saving. *@
-                    <InputText class="form-control" @bind-Value="brandName" />
+                    <select class="form-select" @bind="selectedBrand">
+                        <option value="">Select brand</option>
+
+                        @foreach (var brand in Brands)
+                        {
+                            <option value="@brand">@brand</option>
+                        }
+                    </select>
                 </div>
 
+                <!-- Category dropdown -->
                 <div class="col-md-6">
                     <label class="form-label">Category</label>
-                    @* Same idea here: the EquipmentItem model stores a Category object,
-                       but the form starts with simple text input for easier entry. *@
-                    <InputText class="form-control" @bind-Value="categoryName" />
+                    <select class="form-select" @bind="selectedCategory">
+                        <option value="">Select category</option>
+
+                        @foreach (var category in Categories)
+                        {
+                            <option value="@category">@category</option>
+                        }
+                    </select>
                 </div>
 
+                <!-- Date -->
                 <div class="col-md-6">
                     <label class="form-label">Purchase Date</label>
                     <InputDate class="form-control" @bind-Value="newItem.PurchaseDate" />
                 </div>
 
+                <!-- Notes -->
                 <div class="col-12">
                     <label class="form-label">Notes</label>
                     <InputTextArea class="form-control" rows="4" @bind-Value="newItem.Notes" />
                 </div>
 
+                <!-- Buttons -->
                 <div class="col-12 d-flex gap-2">
                     <button type="submit" class="btn btn-dark">Save Equipment</button>
+
                     <button type="button" class="btn btn-outline-secondary" @onclick="GoBack">
                         Cancel
                     </button>
@@ -59,46 +75,56 @@
 
             </div>
         </EditForm>
+
     </div>
 </div>
 
-@if (isSaved)
-{
-    <div class="alert alert-success mt-4">
-        Equipment item saved successfully.
-    </div>
-}
-
 @code {
+
     private EquipmentItem newItem = new()
     {
         PurchaseDate = DateTime.Today
     };
 
-    // These are temporary text fields for Brand and Category.
-    // Later, these could become dropdowns or separate linked entities from a database.
-    private string brandName = string.Empty;
-    private string categoryName = string.Empty;
+    private string selectedCategory = "";
+    private string selectedBrand = "";
 
-    private bool isSaved = false;
+    // Get existing equipment (used to extract categories + brands)
+    private List<EquipmentItem> equipment = new();
+
+    // Unique category list
+    private IEnumerable<string> Categories => equipment
+        .Select(x => x.Category?.Name)
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Distinct()
+        .OrderBy(x => x)!;
+
+    // Unique brand list
+    private IEnumerable<string> Brands => equipment
+        .Select(x => x.Brand?.Name)
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Distinct()
+        .OrderBy(x => x)!;
+
+    protected override void OnInitialized()
+    {
+        equipment = EquipmentService.GetEquipment();
+    }
 
     private void HandleSubmit()
     {
-        // The EquipmentItem model expects Brand and Category objects,
-        // so we create them here from the entered text values.
-        newItem.Brand = new Brand
-        {
-            Id = 0,
-            Name = brandName
-        };
+        // Simple validation (avoid empty dropdowns)
+        if (string.IsNullOrWhiteSpace(selectedCategory) || string.IsNullOrWhiteSpace(selectedBrand))
+            return;
 
-        newItem.Category = new Category
-        {
-            Id = 0,
-            Name = categoryName
-        };
+        // Convert selected values to objects
+        newItem.Category = new Category { Name = selectedCategory };
+        newItem.Brand = new Brand { Name = selectedBrand };
 
+        // Save via service
         EquipmentService.AddEquipment(newItem);
+
+        // Navigate back to equipment page
         Navigation.NavigateTo("/equipment");
     }
 

@@ -14,3 +14,25 @@ obj/
 # OS files
 .DS_Store
 Thumbs.db
+
+# .NET secrets & config overrides
+appsettings.*.json
+!appsettings.Development.json
+# NuGet
+*.nupkg
+.nuget/
+# Publish output
+publish/
+**/publish/
+# User-specific launchSettings overrides
+Properties/launchSettings.json
+# Test results
+TestResults/
+*.trx
+*.coverage
+# Environment files (wanneer je later MongoDB keys e.d. toevoegt)
+.env
+*.env.local
+
+# Claude Code
+.claude/

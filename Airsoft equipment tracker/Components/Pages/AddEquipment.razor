@@ -1,4 +1,4 @@
-﻿@page "/equipment/add"
+@page "/equipment/add"
 @rendermode InteractiveServer
 
 @using Airsoft_equipment_tracker.Models
@@ -8,7 +8,7 @@
 <h1 class="mb-2">Add Equipment</h1>
 <p class="text-muted mb-4">Add a new item to your airsoft equipment tracker.</p>
 
-<div class="card border-0 shadow-sm">
+<div class="card">
     <div class="card-body">
 
         <EditForm Model="newItem" OnValidSubmit="HandleSubmit">
@@ -26,30 +26,58 @@
                     <InputNumber class="form-control" @bind-Value="newItem.Price" />
                 </div>
 
-                <!-- Brand dropdown -->
+                <!-- Brand: kies bestaande of voeg een nieuwe toe -->
                 <div class="col-md-6">
                     <label class="form-label">Brand</label>
-                    <select class="form-select" @bind="selectedBrandId">
-                        <option value="0">Select brand</option>
 
-                        @foreach (var brand in brands)
-                        {
-                            <option value="@brand.Id">@brand.Name</option>
-                        }
-                    </select>
+                    @if (!addingNewBrand)
+                    {
+                        <select class="form-select" @bind="selectedBrandId">
+                            <option value="0">Select brand</option>
+
+                            @foreach (var brand in brands)
+                            {
+                                <option value="@brand.Id">@brand.Name</option>
+                            }
+                        </select>
+                        <button type="button" class="btn btn-link btn-sm px-0 mt-1" @onclick="StartNewBrand">
+                            + New brand
+                        </button>
+                    }
+                    else
+                    {
+                        <InputText class="form-control" @bind-Value="newBrandName" placeholder="New brand name" />
+                        <button type="button" class="btn btn-link btn-sm px-0 mt-1" @onclick="CancelNewBrand">
+                            Choose existing brand
+                        </button>
+                    }
                 </div>
 
-                <!-- Category dropdown -->
+                <!-- Category: kies bestaande of voeg een nieuwe toe -->
                 <div class="col-md-6">
                     <label class="form-label">Category</label>
-                    <select class="form-select" @bind="selectedCategoryId">
-                        <option value="0">Select category</option>
 
-                        @foreach (var category in categories)
-                        {
-                            <option value="@category.Id">@category.Name</option>
-                        }
-                    </select>
+                    @if (!addingNewCategory)
+                    {
+                        <select class="form-select" @bind="selectedCategoryId">
+                            <option value="0">Select category</option>
+
+                            @foreach (var category in categories)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
+                        </select>
+                        <button type="button" class="btn btn-link btn-sm px-0 mt-1" @onclick="StartNewCategory">
+                            + New category
+                        </button>
+                    }
+                    else
+                    {
+                        <InputText class="form-control" @bind-Value="newCategoryName" placeholder="New category name" />
+                        <button type="button" class="btn btn-link btn-sm px-0 mt-1" @onclick="CancelNewCategory">
+                            Choose existing category
+                        </button>
+                    }
                 </div>
 
                 <!-- Date -->
@@ -63,6 +91,14 @@
                     <label class="form-label">Notes</label>
                     <InputTextArea class="form-control" rows="4" @bind-Value="newItem.Notes" />
                 </div>
+
+                <!-- Validatiemelding -->
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="col-12">
+                        <div class="alert alert-warning mb-0">@error</div>
+                    </div>
+                }
 
                 <!-- Buttons -->
                 <div class="col-12 d-flex gap-2">
@@ -92,17 +128,72 @@
     private List<Brand> brands = new();
     private List<Category> categories = new();
 
+    // Staat voor het inline toevoegen van een nieuw merk/categorie
+    private bool addingNewBrand;
+    private bool addingNewCategory;
+    private string newBrandName = string.Empty;
+    private string newCategoryName = string.Empty;
+
+    private string? error;
+
     protected override async Task OnInitializedAsync()
     {
         brands = await EquipmentService.GetBrandsAsync();
         categories = await EquipmentService.GetCategoriesAsync();
     }
 
+    private void StartNewBrand() => addingNewBrand = true;
+
+    private void CancelNewBrand()
+    {
+        addingNewBrand = false;
+        newBrandName = string.Empty;
+    }
+
+    private void StartNewCategory() => addingNewCategory = true;
+
+    private void CancelNewCategory()
+    {
+        addingNewCategory = false;
+        newCategoryName = string.Empty;
+    }
+
     private async Task HandleSubmit()
     {
+        error = null;
+
+        // Nieuw merk aanmaken (of bestaande terugkrijgen) en koppelen
+        if (addingNewBrand)
+        {
+            if (string.IsNullOrWhiteSpace(newBrandName))
+            {
+                error = "Enter a name for the new brand, or choose an existing one.";
+                return;
+            }
+
+            var brand = await EquipmentService.AddBrandAsync(newBrandName);
+            selectedBrandId = brand.Id;
+        }
+
+        // Zelfde voor categorie
+        if (addingNewCategory)
+        {
+            if (string.IsNullOrWhiteSpace(newCategoryName))
+            {
+                error = "Enter a name for the new category, or choose an existing one.";
+                return;
+            }
+
+            var category = await EquipmentService.AddCategoryAsync(newCategoryName);
+            selectedCategoryId = category.Id;
+        }
+
         // Simpele validatie: brand en category moeten gekozen zijn
         if (selectedBrandId == 0 || selectedCategoryId == 0)
+        {
+            error = "Please select or add both a brand and a category.";
             return;
+        }
 
         // Koppel via de foreign keys naar bestaande brand/category
         newItem.BrandId = selectedBrandId;

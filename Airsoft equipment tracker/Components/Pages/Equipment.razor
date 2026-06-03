@@ -11,8 +11,8 @@
     Add New Equipment
 </a>
 
-<div class="mb-4">
-    <label for="category" class="form-label">Filter by category</label>
+<div class="mb-4" style="max-width: 320px;">
+    <label for="category" class="eyebrow d-block mb-2">Filter by category</label>
     <select id="category" class="form-select" @bind="selectedCategory">
         <option value="All">All</option>
         @foreach (var category in Categories)
@@ -33,7 +33,7 @@
                         <h5 class="card-title">@item.Name</h5>
                         <p class="card-text mb-1"><strong>Brand:</strong> @item.Brand?.Name</p>
                         <p class="card-text mb-1"><strong>Category:</strong> @item.Category?.Name</p>
-                        <p class="card-text mb-1"><strong>Price:</strong> €@item.Price</p>
+                        <p class="card-text mb-1"><strong>Price:</strong> € @item.Price.ToString("0.00")</p>
                         <p class="card-text mb-1"><strong>Purchase Date:</strong> @item.PurchaseDate.ToShortDateString()</p>
 
                         @if (!string.IsNullOrWhiteSpace(item.Notes))

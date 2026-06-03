@@ -1,0 +1,21 @@
+# Normaliseer line endings: in de repo altijd LF, zodat CRLF-ruis verdwijnt.
+* text=auto eol=lf
+
+# Tekstbestanden expliciet als LF
+*.cs      text eol=lf
+*.razor   text eol=lf
+*.css     text eol=lf
+*.js      text eol=lf
+*.json    text eol=lf
+*.csproj  text eol=lf
+*.sln     text eol=lf
+*.slnx    text eol=lf
+*.md      text eol=lf
+
+# Binaire bestanden niet aanraken
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.dll  binary

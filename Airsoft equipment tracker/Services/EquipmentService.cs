@@ -39,6 +39,39 @@ public class EquipmentService
             .ToListAsync();
     }
 
+    // Maakt een merk aan, of geeft het bestaande terug als de naam al bestaat.
+    // SQL Server vergelijkt standaard hoofdletterongevoelig, dus "VFC" == "vfc".
+    public async Task<Brand> AddBrandAsync(string name)
+    {
+        using var context = _contextFactory.CreateDbContext();
+        var trimmed = name.Trim();
+
+        var existing = await context.Brands.FirstOrDefaultAsync(b => b.Name == trimmed);
+        if (existing is not null)
+            return existing;
+
+        var brand = new Brand { Name = trimmed };
+        context.Brands.Add(brand);
+        await context.SaveChangesAsync();
+        return brand;
+    }
+
+    // Zelfde aanpak voor categorieen.
+    public async Task<Category> AddCategoryAsync(string name)
+    {
+        using var context = _contextFactory.CreateDbContext();
+        var trimmed = name.Trim();
+
+        var existing = await context.Categories.FirstOrDefaultAsync(c => c.Name == trimmed);
+        if (existing is not null)
+            return existing;
+
+        var category = new Category { Name = trimmed };
+        context.Categories.Add(category);
+        await context.SaveChangesAsync();
+        return category;
+    }
+
     public async Task AddEquipmentAsync(EquipmentItem item)
     {
         using var context = _contextFactory.CreateDbContext();

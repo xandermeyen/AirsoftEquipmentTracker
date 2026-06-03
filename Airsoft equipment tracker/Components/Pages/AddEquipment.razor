@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 
 @using Airsoft_equipment_tracker.Models
-@inject Airsoft_equipment_tracker.Services.MockEquipmentService EquipmentService
+@inject Airsoft_equipment_tracker.Services.EquipmentService EquipmentService
 @inject NavigationManager Navigation
 
 <h1 class="mb-2">Add Equipment</h1>
@@ -29,12 +29,12 @@
                 <!-- Brand dropdown -->
                 <div class="col-md-6">
                     <label class="form-label">Brand</label>
-                    <select class="form-select" @bind="selectedBrand">
-                        <option value="">Select brand</option>
+                    <select class="form-select" @bind="selectedBrandId">
+                        <option value="0">Select brand</option>
 
-                        @foreach (var brand in Brands)
+                        @foreach (var brand in brands)
                         {
-                            <option value="@brand">@brand</option>
+                            <option value="@brand.Id">@brand.Name</option>
                         }
                     </select>
                 </div>
@@ -42,12 +42,12 @@
                 <!-- Category dropdown -->
                 <div class="col-md-6">
                     <label class="form-label">Category</label>
-                    <select class="form-select" @bind="selectedCategory">
-                        <option value="">Select category</option>
+                    <select class="form-select" @bind="selectedCategoryId">
+                        <option value="0">Select category</option>
 
-                        @foreach (var category in Categories)
+                        @foreach (var category in categories)
                         {
-                            <option value="@category">@category</option>
+                            <option value="@category.Id">@category.Name</option>
                         }
                     </select>
                 </div>
@@ -86,45 +86,30 @@
         PurchaseDate = DateTime.Today
     };
 
-    private string selectedCategory = "";
-    private string selectedBrand = "";
+    private int selectedCategoryId;
+    private int selectedBrandId;
 
-    // Get existing equipment (used to extract categories + brands)
-    private List<EquipmentItem> equipment = new();
+    private List<Brand> brands = new();
+    private List<Category> categories = new();
 
-    // Unique category list
-    private IEnumerable<string> Categories => equipment
-        .Select(x => x.Category?.Name)
-        .Where(x => !string.IsNullOrWhiteSpace(x))
-        .Distinct()
-        .OrderBy(x => x)!;
-
-    // Unique brand list
-    private IEnumerable<string> Brands => equipment
-        .Select(x => x.Brand?.Name)
-        .Where(x => !string.IsNullOrWhiteSpace(x))
-        .Distinct()
-        .OrderBy(x => x)!;
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        equipment = EquipmentService.GetEquipment();
+        brands = await EquipmentService.GetBrandsAsync();
+        categories = await EquipmentService.GetCategoriesAsync();
     }
 
-    private void HandleSubmit()
+    private async Task HandleSubmit()
     {
-        // Simple validation (avoid empty dropdowns)
-        if (string.IsNullOrWhiteSpace(selectedCategory) || string.IsNullOrWhiteSpace(selectedBrand))
+        // Simpele validatie: brand en category moeten gekozen zijn
+        if (selectedBrandId == 0 || selectedCategoryId == 0)
             return;
 
-        // Convert selected values to objects
-        newItem.Category = new Category { Name = selectedCategory };
-        newItem.Brand = new Brand { Name = selectedBrand };
+        // Koppel via de foreign keys naar bestaande brand/category
+        newItem.BrandId = selectedBrandId;
+        newItem.CategoryId = selectedCategoryId;
 
-        // Save via service
-        EquipmentService.AddEquipment(newItem);
+        await EquipmentService.AddEquipmentAsync(newItem);
 
-        // Navigate back to equipment page
         Navigation.NavigateTo("/equipment");
     }
 

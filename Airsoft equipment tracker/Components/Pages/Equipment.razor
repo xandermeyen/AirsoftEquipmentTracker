@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 
 @using Airsoft_equipment_tracker.Models
-@inject Airsoft_equipment_tracker.Services.MockEquipmentService EquipmentService
+@inject Airsoft_equipment_tracker.Services.EquipmentService EquipmentService
 
 <h1 class="mb-2">Equipment</h1>
 <p class="text-muted mb-4">Overview of your airsoft replicas, gear, and other tracked items.</p>
@@ -75,8 +75,8 @@ else
             .Distinct()
             .OrderBy(name => name)!;
 
-        protected override void OnInitialized()
-        {
-            equipment = EquipmentService.GetEquipment();
-        }
+    protected override async Task OnInitializedAsync()
+    {
+        equipment = await EquipmentService.GetEquipmentAsync();
+    }
 }

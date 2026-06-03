@@ -1,0 +1,152 @@
+﻿@page "/equipment/edit/{Id:int}"
+@rendermode InteractiveServer
+
+@using Airsoft_equipment_tracker.Models
+@inject Airsoft_equipment_tracker.Services.EquipmentService EquipmentService
+@inject NavigationManager Navigation
+
+<h1 class="mb-2">Edit Equipment</h1>
+<p class="text-muted mb-4">Update the details of an existing item in your tracker.</p>
+
+@if (notFound)
+{
+    <div class="alert alert-warning">
+        Equipment item not found.
+    </div>
+
+    <a class="btn btn-outline-secondary" href="/equipment">Back to overview</a>
+}
+else if (editItem is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+else
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+
+            <EditForm Model="editItem" OnValidSubmit="HandleSubmit">
+                <div class="row g-4">
+
+                    <!-- Name -->
+                    <div class="col-md-6">
+                        <label class="form-label">Name</label>
+                        <InputText class="form-control" @bind-Value="editItem.Name" />
+                    </div>
+
+                    <!-- Price -->
+                    <div class="col-md-6">
+                        <label class="form-label">Price</label>
+                        <InputNumber class="form-control" @bind-Value="editItem.Price" />
+                    </div>
+
+                    <!-- Brand dropdown -->
+                    <div class="col-md-6">
+                        <label class="form-label">Brand</label>
+                        <select class="form-select" @bind="selectedBrandId">
+                            <option value="0">Select brand</option>
+
+                            @foreach (var brand in brands)
+                            {
+                                <option value="@brand.Id">@brand.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Category dropdown -->
+                    <div class="col-md-6">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" @bind="selectedCategoryId">
+                            <option value="0">Select category</option>
+
+                            @foreach (var category in categories)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="col-md-6">
+                        <label class="form-label">Purchase Date</label>
+                        <InputDate class="form-control" @bind-Value="editItem.PurchaseDate" />
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="col-12">
+                        <label class="form-label">Notes</label>
+                        <InputTextArea class="form-control" rows="4" @bind-Value="editItem.Notes" />
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="col-12 d-flex gap-2">
+                        <button type="submit" class="btn btn-dark">Save Changes</button>
+
+                        <button type="button" class="btn btn-outline-secondary" @onclick="GoBack">
+                            Cancel
+                        </button>
+                    </div>
+
+                </div>
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    private EquipmentItem? editItem;
+    private bool notFound;
+
+    private int selectedCategoryId;
+    private int selectedBrandId;
+
+    private List<Brand> brands = new();
+    private List<Category> categories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        brands = await EquipmentService.GetBrandsAsync();
+        categories = await EquipmentService.GetCategoriesAsync();
+
+        // Haal het bestaande item op via de id uit de route
+        editItem = await EquipmentService.GetEquipmentByIdAsync(Id);
+
+        if (editItem is null)
+        {
+            notFound = true;
+            return;
+        }
+
+        // Dropdowns vooraf invullen met de huidige waarden
+        selectedBrandId = editItem.BrandId;
+        selectedCategoryId = editItem.CategoryId;
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (editItem is null)
+            return;
+
+        // Simpele validatie: brand en category moeten gekozen zijn
+        if (selectedBrandId == 0 || selectedCategoryId == 0)
+            return;
+
+        // Koppel via de foreign keys naar bestaande brand/category
+        editItem.BrandId = selectedBrandId;
+        editItem.CategoryId = selectedCategoryId;
+
+        await EquipmentService.UpdateEquipmentAsync(editItem);
+
+        Navigation.NavigateTo("/equipment");
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/equipment");
+    }
+}

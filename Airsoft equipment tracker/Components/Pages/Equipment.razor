@@ -1,4 +1,4 @@
-﻿@page "/equipment"
+@page "/equipment"
 @rendermode InteractiveServer
 
 @using Airsoft_equipment_tracker.Models
@@ -42,6 +42,17 @@
                                 <strong>Notes:</strong> @item.Notes
                             </p>
                         }
+
+                        <!-- Edit + delete acties per item -->
+                        <div class="d-flex gap-2 mt-3">
+                            <a class="btn btn-sm btn-outline-dark" href="@($"/equipment/edit/{item.Id}")">
+                                Edit
+                            </a>
+
+                            <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => AskDelete(item)">
+                                Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -55,9 +66,44 @@ else
     </div>
 }
 
+<!-- Bevestigingsmodal voor delete. Wordt alleen getoond als itemToDelete gezet is. -->
+@if (itemToDelete is not null)
+{
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete equipment</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">
+                        Are you sure you want to delete <strong>@itemToDelete.Name</strong>?
+                        This action cannot be undone.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" @onclick="CancelDelete">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donkere achtergrond achter de modal -->
+    <div class="modal-backdrop fade show"></div>
+}
+
     @code {
         private List<EquipmentItem> equipment = new();
         private string selectedCategory = "All";
+
+        // Item waarvoor de delete-bevestiging open staat. Null = geen modal.
+        private EquipmentItem? itemToDelete;
 
         // Returns the list of equipment filtered by the selected category.
         // If "All" is selected, the full equipment list is returned.
@@ -77,6 +123,30 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        equipment = await EquipmentService.GetEquipmentAsync();
+    }
+
+    // Opent de bevestigingsmodal voor het gekozen item
+    private void AskDelete(EquipmentItem item)
+    {
+        itemToDelete = item;
+    }
+
+    // Sluit de modal zonder te verwijderen
+    private void CancelDelete()
+    {
+        itemToDelete = null;
+    }
+
+    // Verwijdert het item en ververst de lijst
+    private async Task ConfirmDelete()
+    {
+        if (itemToDelete is null)
+            return;
+
+        await EquipmentService.DeleteEquipmentAsync(itemToDelete.Id);
+
+        itemToDelete = null;
         equipment = await EquipmentService.GetEquipmentAsync();
     }
 }

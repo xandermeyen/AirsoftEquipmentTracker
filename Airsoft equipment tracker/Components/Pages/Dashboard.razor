@@ -4,7 +4,7 @@
 @using System.Linq
 @using System.Globalization
 @using Airsoft_equipment_tracker.Models
-@inject Airsoft_equipment_tracker.Services.MockEquipmentService EquipmentService
+@inject Airsoft_equipment_tracker.Services.EquipmentService EquipmentService
 @inject NavigationManager Navigation
 
 <PageTitle>Dashboard</PageTitle>
@@ -128,9 +128,9 @@
 
     private List<CategoryStat> categoryBreakdown = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        equipment = EquipmentService.GetEquipment();
+        equipment = await EquipmentService.GetEquipmentAsync();
 
         totalValue = equipment.Sum(x => x.Price);
 

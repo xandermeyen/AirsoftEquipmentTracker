@@ -1,38 +1,89 @@
+# ==========================================
+#  .NET / Blazor .gitignore
+# ==========================================
+
+# Build results
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+
 # Visual Studio
 .vs/
 *.user
 *.suo
 *.cache
+*.userprefs
+*.userosscache
+*.sln.docstates
 
-# Build results
-bin/
-obj/
-
-# Rider
+# Rider / JetBrains
 .idea/
+*.sln.iml
 
-# OS files
-.DS_Store
-Thumbs.db
+# VS Code (optioneel — verwijder als je je settings wél wil delen)
+.vscode/
 
-# .NET secrets & config overrides
+# ==========================================
+#  Secrets & configuratie — NOOIT committen
+# ==========================================
+
+# Environment-specifieke settings (bevatten vaak wachtwoorden/keys)
 appsettings.*.json
-!appsettings.Development.json
-# NuGet
-*.nupkg
-.nuget/
-# Publish output
-publish/
-**/publish/
-# User-specific launchSettings overrides
-Properties/launchSettings.json
-# Test results
-TestResults/
-*.trx
-*.coverage
-# Environment files (wanneer je later MongoDB keys e.d. toevoegt)
+# Let op: appsettings.json zelf wordt WEL gecommit (zonder echte secrets erin)
+
+# User secrets worden buiten de projectmap opgeslagen, maar voor de zekerheid
+secrets.json
+
+# Environment files
 .env
+.env.local
 *.env.local
 
-# Claude Code
+# ==========================================
+#  NuGet
+# ==========================================
+*.nupkg
+*.snupkg
+.nuget/
+**/packages/*
+!**/packages/build/
+
+# ==========================================
+#  Publish output
+# ==========================================
+publish/
+**/publish/
+*.publishsettings
+PublishProfiles/
+
+# ==========================================
+#  User-specific overrides
+# ==========================================
+Properties/launchSettings.json
+
+# ==========================================
+#  Test results
+# ==========================================
+TestResults/
+[Tt]est[Rr]esults/
+*.trx
+*.coverage
+*.coverML
+
+# ==========================================
+#  OS files
+# ==========================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ==========================================
+#  Claude Code
+# ==========================================
 .claude/

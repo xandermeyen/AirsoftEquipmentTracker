@@ -30,6 +30,14 @@ namespace Airsoft_equipment_tracker.Data
                 .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Brand>()
+                .HasIndex(b => b.Name)
+                .IsUnique();
+
+            modelBuilder.Entity<Category>()
+                .HasIndex(c => c.Name)
+                .IsUnique();
+
             modelBuilder.Entity<Category>().HasData(
                 new Category { Id = 1, Name = "Primary" },
                 new Category { Id = 2, Name = "Secondary" },

@@ -11,7 +11,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<EquipmentService>();
+builder.Services.AddSingleton<EquipmentService>();
 
 var app = builder.Build();
 

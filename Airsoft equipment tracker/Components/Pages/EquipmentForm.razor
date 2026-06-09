@@ -77,6 +77,7 @@
         <div class="col-md-6">
             <label class="form-label">Purchase Date</label>
             <InputDate class="form-control" @bind-Value="Model.PurchaseDate" />
+            <ValidationMessage For="() => Model.PurchaseDate" class="text-danger small" />
         </div>
 
         <!-- Status -->

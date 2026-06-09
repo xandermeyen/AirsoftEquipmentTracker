@@ -19,6 +19,7 @@ namespace Airsoft_equipment_tracker.Models
         [Range(0, 100000, ErrorMessage = "Price must be between 0 and 100,000.")]
         public decimal Price { get; set; }
 
+        [NotInFuture(ErrorMessage = "Purchase date cannot be in the future.")]
         public DateTime PurchaseDate { get; set; }
 
         // Standaard Owned, zodat bestaande rijen na de migratie gewoon meetellen

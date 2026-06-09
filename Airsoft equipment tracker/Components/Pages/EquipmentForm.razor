@@ -77,6 +77,16 @@
             <InputDate class="form-control" @bind-Value="Model.PurchaseDate" />
         </div>
 
+        <!-- Status -->
+        <div class="col-md-6">
+            <label class="form-label">Status</label>
+            <InputSelect class="form-select" @bind-Value="Model.Status">
+                <option value="@EquipmentStatus.Owned">Owned</option>
+                <option value="@EquipmentStatus.Sold">Sold</option>
+                <option value="@EquipmentStatus.Wishlist">Wishlist</option>
+            </InputSelect>
+        </div>
+
         <!-- Notes -->
         <div class="col-12">
             <label class="form-label">Notes</label>

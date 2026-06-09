@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Airsoft_equipment_tracker.Models
 {
@@ -20,6 +20,9 @@ namespace Airsoft_equipment_tracker.Models
         public decimal Price { get; set; }
 
         public DateTime PurchaseDate { get; set; }
+
+        // Standaard Owned, zodat bestaande rijen na de migratie gewoon meetellen
+        public EquipmentStatus Status { get; set; } = EquipmentStatus.Owned;
 
         [MaxLength(2000, ErrorMessage = "Notes can be at most 2000 characters.")]
         public string Notes { get; set; } = string.Empty;

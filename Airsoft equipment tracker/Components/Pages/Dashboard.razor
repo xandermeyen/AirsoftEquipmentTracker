@@ -21,25 +21,34 @@
 </div>
 
 <div class="row g-4 mb-5">
-    <div class="col-md-6 col-xl-4">
+    <div class="col-md-6 col-xl-3">
         <div class="card h-100">
             <div class="card-body">
-                <p class="eyebrow mb-2">Total Items</p>
-                <p class="stat-value mb-0">@equipment.Count</p>
+                <p class="eyebrow mb-2">Owned Items</p>
+                <p class="stat-value mb-0">@ownedCount</p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-xl-4">
+    <div class="col-md-6 col-xl-3">
         <div class="card h-100">
             <div class="card-body">
-                <p class="eyebrow mb-2">Total Value</p>
+                <p class="eyebrow mb-2">Total Value (Owned)</p>
                 <p class="stat-value accent mb-0">€ @totalValue.ToString("0.00")</p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-xl-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="eyebrow mb-2">Wishlist Value</p>
+                <p class="stat-value mb-0">€ @wishlistValue.ToString("0.00")</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
         <div class="card h-100">
             <div class="card-body">
                 <p class="eyebrow mb-2">Categories Used</p>
@@ -120,7 +129,11 @@
 
     private List<EquipmentItem> equipment = new();
 
+    private int ownedCount;
+
     private decimal totalValue;
+
+    private decimal wishlistValue;
 
     private int categoryCount;
 
@@ -132,20 +145,29 @@
     {
         equipment = await EquipmentService.GetEquipmentAsync();
 
-        totalValue = equipment.Sum(x => x.Price);
+        // Totalen tellen alleen Owned items mee; de wishlist krijgt een eigen kaart
+        var owned = equipment.Where(x => x.Status == EquipmentStatus.Owned).ToList();
 
-        categoryCount = equipment
+        ownedCount = owned.Count;
+
+        totalValue = owned.Sum(x => x.Price);
+
+        wishlistValue = equipment
+            .Where(x => x.Status == EquipmentStatus.Wishlist)
+            .Sum(x => x.Price);
+
+        categoryCount = owned
             .Select(x => x.Category?.Name)
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Distinct()
             .Count();
 
-        recentEquipment = equipment
+        recentEquipment = owned
             .OrderByDescending(x => x.PurchaseDate)
             .Take(3)
             .ToList();
 
-        categoryBreakdown = equipment
+        categoryBreakdown = owned
             .Where(x => !string.IsNullOrWhiteSpace(x.Category?.Name))
             .GroupBy(x => x.Category!.Name)
             .Select(group => new CategoryStat

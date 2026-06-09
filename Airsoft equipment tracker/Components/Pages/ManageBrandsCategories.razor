@@ -1,0 +1,271 @@
+@page "/manage"
+@rendermode InteractiveServer
+
+@using Airsoft_equipment_tracker.Models
+@inject Airsoft_equipment_tracker.Services.EquipmentService EquipmentService
+
+<PageTitle>Manage Brands & Categories</PageTitle>
+
+<h1 class="mb-2">Manage Brands & Categories</h1>
+<p class="text-muted mb-4">Rename brands and categories, or delete the ones you no longer use.</p>
+
+@* Feedback na een actie (gelukt of niet) *@
+@if (statusMessage is not null)
+{
+    <div class="alert @(statusIsError ? "alert-danger" : "alert-success") alert-dismissible">
+        @statusMessage
+        <button type="button" class="btn-close" @onclick="() => statusMessage = null"></button>
+    </div>
+}
+
+@if (isLoading)
+{
+    <div class="d-flex align-items-center gap-2 text-muted py-5 justify-content-center">
+        <div class="spinner-border spinner-border-sm" role="status"></div>
+        <span>Loading...</span>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="eyebrow mb-3">Brands</p>
+
+                    <ul class="list-group list-group-flush">
+                        @foreach (var brand in brands)
+                        {
+                            <li class="list-group-item d-flex align-items-center gap-2 px-0">
+                                @if (editingBrandId == brand.Id)
+                                {
+                                    <input type="text" class="form-control form-control-sm" @bind="editName" />
+                                    <button type="button" class="btn btn-sm btn-dark" @onclick="SaveBrandRename">Save</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CancelEdit">Cancel</button>
+                                }
+                                else
+                                {
+                                    <span class="me-auto">@brand.Name</span>
+                                    <span class="badge text-bg-light border">@UsageFor(brandUsage, brand.Id) items</span>
+                                    <button type="button" class="btn btn-sm btn-outline-dark" @onclick="() => StartBrandEdit(brand)">Rename</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => AskDeleteBrand(brand)">Delete</button>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="eyebrow mb-3">Categories</p>
+
+                    <ul class="list-group list-group-flush">
+                        @foreach (var category in categories)
+                        {
+                            <li class="list-group-item d-flex align-items-center gap-2 px-0">
+                                @if (editingCategoryId == category.Id)
+                                {
+                                    <input type="text" class="form-control form-control-sm" @bind="editName" />
+                                    <button type="button" class="btn btn-sm btn-dark" @onclick="SaveCategoryRename">Save</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CancelEdit">Cancel</button>
+                                }
+                                else
+                                {
+                                    <span class="me-auto">@category.Name</span>
+                                    <span class="badge text-bg-light border">@UsageFor(categoryUsage, category.Id) items</span>
+                                    <button type="button" class="btn btn-sm btn-outline-dark" @onclick="() => StartCategoryEdit(category)">Rename</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => AskDeleteCategory(category)">Delete</button>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+}
+
+@* Bevestigingsmodal voor delete, zelfde patroon als op de equipment-pagina *@
+@if (deleteName is not null)
+{
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete @deleteKind</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">
+                        Are you sure you want to delete <strong>@deleteName</strong>?
+                        This action cannot be undone.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<Brand> brands = new();
+    private List<Category> categories = new();
+    private Dictionary<int, int> brandUsage = new();
+    private Dictionary<int, int> categoryUsage = new();
+    private bool isLoading = true;
+
+    // Status van de laatste actie, getoond in de alert bovenaan
+    private string? statusMessage;
+    private bool statusIsError;
+
+    // Inline rename: id van het merk/de categorie die bewerkt wordt (null = geen)
+    private int? editingBrandId;
+    private int? editingCategoryId;
+    private string editName = string.Empty;
+
+    // Delete-bevestiging: kind is "brand" of "category", null = geen modal
+    private string? deleteKind;
+    private int deleteId;
+    private string? deleteName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+        isLoading = false;
+    }
+
+    private async Task LoadDataAsync()
+    {
+        brands = await EquipmentService.GetBrandsAsync();
+        categories = await EquipmentService.GetCategoriesAsync();
+        brandUsage = await EquipmentService.GetBrandUsageCountsAsync();
+        categoryUsage = await EquipmentService.GetCategoryUsageCountsAsync();
+    }
+
+    // Geeft het aantal items terug dat dit merk/deze categorie gebruikt (0 als onbekend)
+    private static int UsageFor(Dictionary<int, int> usage, int id) =>
+        usage.TryGetValue(id, out var count) ? count : 0;
+
+    private void StartBrandEdit(Brand brand)
+    {
+        editingBrandId = brand.Id;
+        editingCategoryId = null;
+        editName = brand.Name;
+    }
+
+    private void StartCategoryEdit(Category category)
+    {
+        editingCategoryId = category.Id;
+        editingBrandId = null;
+        editName = category.Name;
+    }
+
+    private void CancelEdit()
+    {
+        editingBrandId = null;
+        editingCategoryId = null;
+        editName = string.Empty;
+    }
+
+    private async Task SaveBrandRename()
+    {
+        if (editingBrandId is null)
+            return;
+
+        var success = await EquipmentService.RenameBrandAsync(editingBrandId.Value, editName);
+        if (success)
+        {
+            ShowStatus($"Brand renamed to \"{editName.Trim()}\".", isError: false);
+        }
+        else
+        {
+            ShowStatus("Could not rename this brand. The name may be empty or already in use.", isError: true);
+        }
+
+        CancelEdit();
+        await LoadDataAsync();
+    }
+
+    private async Task SaveCategoryRename()
+    {
+        if (editingCategoryId is null)
+            return;
+
+        var success = await EquipmentService.RenameCategoryAsync(editingCategoryId.Value, editName);
+        if (success)
+        {
+            ShowStatus($"Category renamed to \"{editName.Trim()}\".", isError: false);
+        }
+        else
+        {
+            ShowStatus("Could not rename this category. The name may be empty or already in use.", isError: true);
+        }
+
+        CancelEdit();
+        await LoadDataAsync();
+    }
+
+    private void AskDeleteBrand(Brand brand)
+    {
+        deleteKind = "brand";
+        deleteId = brand.Id;
+        deleteName = brand.Name;
+    }
+
+    private void AskDeleteCategory(Category category)
+    {
+        deleteKind = "category";
+        deleteId = category.Id;
+        deleteName = category.Name;
+    }
+
+    private void CancelDelete()
+    {
+        deleteKind = null;
+        deleteName = null;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (deleteKind is null)
+            return;
+
+        var name = deleteName;
+        bool success;
+
+        if (deleteKind == "brand")
+            success = await EquipmentService.DeleteBrandAsync(deleteId);
+        else
+            success = await EquipmentService.DeleteCategoryAsync(deleteId);
+
+        if (success)
+        {
+            ShowStatus($"\"{name}\" was deleted.", isError: false);
+        }
+        else
+        {
+            // DeleteBehavior.Restrict in de database, dus dit is de nette variant
+            // van de exception die anders zou volgen.
+            ShowStatus($"\"{name}\" is still used by one or more equipment items and cannot be deleted.", isError: true);
+        }
+
+        CancelDelete();
+        await LoadDataAsync();
+    }
+
+    private void ShowStatus(string message, bool isError)
+    {
+        statusMessage = message;
+        statusIsError = isError;
+    }
+}

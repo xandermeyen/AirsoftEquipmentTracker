@@ -114,4 +114,105 @@ public class EquipmentService
         context.EquipmentItems.Remove(item);
         await context.SaveChangesAsync();
     }
+
+    // Telt per merk hoeveel equipment items ernaar verwijzen.
+    // De beheerpagina gebruikt dit om delete te blokkeren met een nette melding.
+    public async Task<Dictionary<int, int>> GetBrandUsageCountsAsync()
+    {
+        using var context = _contextFactory.CreateDbContext();
+        return await context.EquipmentItems
+            .GroupBy(e => e.BrandId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count);
+    }
+
+    // Zelfde idee, maar per categorie.
+    public async Task<Dictionary<int, int>> GetCategoryUsageCountsAsync()
+    {
+        using var context = _contextFactory.CreateDbContext();
+        return await context.EquipmentItems
+            .GroupBy(e => e.CategoryId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count);
+    }
+
+    // Hernoemt een merk. Geeft false terug als het merk niet bestaat
+    // of als de nieuwe naam al door een ander merk gebruikt wordt.
+    public async Task<bool> RenameBrandAsync(int id, string newName)
+    {
+        using var context = _contextFactory.CreateDbContext();
+        var brand = await context.Brands.FindAsync(id);
+        if (brand is null)
+            return false;
+
+        var trimmed = newName.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+            return false;
+
+        // Unieke index op Name, dus eerst checken op een duplicaat
+        var duplicate = await context.Brands.AnyAsync(b => b.Id != id && b.Name == trimmed);
+        if (duplicate)
+            return false;
+
+        brand.Name = trimmed;
+        await context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> RenameCategoryAsync(int id, string newName)
+    {
+        using var context = _contextFactory.CreateDbContext();
+        var category = await context.Categories.FindAsync(id);
+        if (category is null)
+            return false;
+
+        var trimmed = newName.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+            return false;
+
+        var duplicate = await context.Categories.AnyAsync(c => c.Id != id && c.Name == trimmed);
+        if (duplicate)
+            return false;
+
+        category.Name = trimmed;
+        await context.SaveChangesAsync();
+        return true;
+    }
+
+    // Verwijdert een merk, maar alleen als geen enkel item er nog naar verwijst.
+    // De database heeft DeleteBehavior.Restrict, dus zonder deze check zou
+    // SaveChanges een exception gooien.
+    public async Task<bool> DeleteBrandAsync(int id)
+    {
+        using var context = _contextFactory.CreateDbContext();
+
+        var inUse = await context.EquipmentItems.AnyAsync(e => e.BrandId == id);
+        if (inUse)
+            return false;
+
+        var brand = await context.Brands.FindAsync(id);
+        if (brand is null)
+            return false;
+
+        context.Brands.Remove(brand);
+        await context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteCategoryAsync(int id)
+    {
+        using var context = _contextFactory.CreateDbContext();
+
+        var inUse = await context.EquipmentItems.AnyAsync(e => e.CategoryId == id);
+        if (inUse)
+            return false;
+
+        var category = await context.Categories.FindAsync(id);
+        if (category is null)
+            return false;
+
+        context.Categories.Remove(category);
+        await context.SaveChangesAsync();
+        return true;
+    }
 }

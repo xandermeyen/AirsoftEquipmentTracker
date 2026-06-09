@@ -84,6 +84,11 @@ ehthumbs.db
 desktop.ini
 
 # ==========================================
+#  Uploads (door gebruikers toegevoegde foto's)
+# ==========================================
+Airsoft equipment tracker/wwwroot/uploads/
+
+# ==========================================
 #  Claude Code
 # ==========================================
 .claude/

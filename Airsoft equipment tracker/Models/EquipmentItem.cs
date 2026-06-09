@@ -24,6 +24,11 @@ namespace Airsoft_equipment_tracker.Models
         // Standaard Owned, zodat bestaande rijen na de migratie gewoon meetellen
         public EquipmentStatus Status { get; set; } = EquipmentStatus.Owned;
 
+        // Relatief pad naar de foto in wwwroot (bv. "uploads/abc.jpg").
+        // Null betekent: geen foto, toon de placeholder.
+        [MaxLength(260)]
+        public string? ImagePath { get; set; }
+
         [MaxLength(2000, ErrorMessage = "Notes can be at most 2000 characters.")]
         public string Notes { get; set; } = string.Empty;
     }

@@ -1,5 +1,7 @@
 @using Airsoft_equipment_tracker.Models
+@using Airsoft_equipment_tracker.Services
 @inject Airsoft_equipment_tracker.Services.EquipmentService EquipmentService
+@inject Airsoft_equipment_tracker.Services.ImageService Images
 
 <EditForm Model="Model" OnValidSubmit="HandleSubmit">
     <DataAnnotationsValidator />
@@ -75,6 +77,33 @@
         <div class="col-md-6">
             <label class="form-label">Purchase Date</label>
             <InputDate class="form-control" @bind-Value="Model.PurchaseDate" />
+            <ValidationMessage For="() => Model.PurchaseDate" class="text-danger small" />
+        </div>
+
+        <!-- Status -->
+        <div class="col-md-6">
+            <label class="form-label">Status</label>
+            <InputSelect class="form-select" @bind-Value="Model.Status">
+                <option value="@EquipmentStatus.Owned">Owned</option>
+                <option value="@EquipmentStatus.Sold">Sold</option>
+                <option value="@EquipmentStatus.Wishlist">Wishlist</option>
+            </InputSelect>
+        </div>
+
+        <!-- Photo -->
+        <div class="col-md-6">
+            <label class="form-label">Photo</label>
+
+            @if (!string.IsNullOrWhiteSpace(Model.ImagePath))
+            {
+                <div class="mb-2">
+                    <img src="@Model.ImagePath" alt="Current photo of @Model.Name"
+                         class="rounded border" style="max-height: 120px;" />
+                </div>
+            }
+
+            <InputFile class="form-control" OnChange="OnImageSelected" accept=".jpg,.jpeg,.png,.webp" />
+            <div class="form-text">JPG, PNG or WebP, max 5 MB.</div>
         </div>
 
         <!-- Notes -->
@@ -117,6 +146,9 @@
     private string newBrandName = string.Empty;
     private string newCategoryName = string.Empty;
     private string? error;
+
+    // Gekozen foto; wordt pas opgeslagen bij submit
+    private IBrowserFile? selectedImage;
 
     protected override void OnParametersSet()
     {
@@ -186,6 +218,29 @@
         Model.BrandId = selectedBrandId;
         Model.CategoryId = selectedCategoryId;
 
+        // Foto opslaan (en de oude vervangen) als er een nieuwe gekozen is
+        if (selectedImage is not null)
+        {
+            var imageError = ImageService.Validate(selectedImage);
+            if (imageError is not null)
+            {
+                error = imageError;
+                return;
+            }
+
+            try
+            {
+                var oldImage = Model.ImagePath;
+                Model.ImagePath = await Images.SaveImageAsync(selectedImage);
+                Images.DeleteImage(oldImage);
+            }
+            catch (Exception)
+            {
+                error = "Could not save the image. Please try again.";
+                return;
+            }
+        }
+
         try
         {
             await OnValidSubmit.InvokeAsync();
@@ -194,6 +249,12 @@
         {
             error = "Something went wrong while saving. Please try again.";
         }
+    }
+
+    private void OnImageSelected(InputFileChangeEventArgs e)
+    {
+        selectedImage = e.File;
+        error = null;
     }
 
     private void StartNewBrand() => addingNewBrand = true;

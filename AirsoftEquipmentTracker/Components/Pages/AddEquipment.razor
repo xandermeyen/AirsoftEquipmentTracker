@@ -1,0 +1,42 @@
+@page "/equipment/add"
+@rendermode InteractiveServer
+
+@using AirsoftEquipmentTracker.Models
+@inject AirsoftEquipmentTracker.Services.EquipmentService EquipmentService
+@inject NavigationManager Navigation
+
+<h1 class="mb-2">Add Equipment</h1>
+<p class="text-muted mb-4">Add a new item to your airsoft equipment tracker.</p>
+
+<div class="card">
+    <div class="card-body">
+        <EquipmentForm
+            Model="newItem"
+            Brands="brands"
+            Categories="categories"
+            SubmitLabel="Save Equipment"
+            OnCancel="GoBack"
+            OnValidSubmit="HandleSubmit" />
+    </div>
+</div>
+
+@code {
+
+    private EquipmentItem newItem = new() { PurchaseDate = DateTime.Today };
+    private List<Brand> brands = new();
+    private List<Category> categories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        brands = await EquipmentService.GetBrandsAsync();
+        categories = await EquipmentService.GetCategoriesAsync();
+    }
+
+    private async Task HandleSubmit()
+    {
+        await EquipmentService.AddEquipmentAsync(newItem);
+        Navigation.NavigateTo("/equipment");
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/equipment");
+}

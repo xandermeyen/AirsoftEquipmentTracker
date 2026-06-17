@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="AirsoftEquipmentTracker/AirsoftEquipmentTracker.csproj" />
+  <Project Path="AirsoftEquipmentTracker.Tests/AirsoftEquipmentTracker.Tests.csproj" />
+</Solution>

@@ -1,0 +1,62 @@
+@page "/equipment/edit/{Id:int}"
+@rendermode InteractiveServer
+
+@using AirsoftEquipmentTracker.Models
+@inject AirsoftEquipmentTracker.Services.EquipmentService EquipmentService
+@inject NavigationManager Navigation
+
+<h1 class="mb-2">Edit Equipment</h1>
+<p class="text-muted mb-4">Update the details of an existing item in your tracker.</p>
+
+@if (notFound)
+{
+    <div class="alert alert-warning">Equipment item not found.</div>
+    <a class="btn btn-outline-secondary" href="/equipment">Back to overview</a>
+}
+else if (editItem is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            <EquipmentForm
+                Model="editItem"
+                Brands="brands"
+                Categories="categories"
+                SubmitLabel="Save Changes"
+                OnCancel="GoBack"
+                OnValidSubmit="HandleSubmit" />
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    private EquipmentItem? editItem;
+    private bool notFound;
+    private List<Brand> brands = new();
+    private List<Category> categories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        brands = await EquipmentService.GetBrandsAsync();
+        categories = await EquipmentService.GetCategoriesAsync();
+
+        editItem = await EquipmentService.GetEquipmentByIdAsync(Id);
+
+        if (editItem is null)
+            notFound = true;
+    }
+
+    private async Task HandleSubmit()
+    {
+        await EquipmentService.UpdateEquipmentAsync(editItem!);
+        Navigation.NavigateTo("/equipment");
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/equipment");
+}

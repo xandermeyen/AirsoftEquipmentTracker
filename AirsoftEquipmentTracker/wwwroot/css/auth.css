@@ -1,0 +1,352 @@
+/* ========================================================
+   Auth pages — Airsoft Tracker
+   Colours: olive #57642a | amber #d98324 | gunmetal #1c211e
+   ======================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body.auth-body {
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #e8e4dc;
+    min-height: 100vh;
+    display: flex;
+    align-items: stretch;
+}
+
+/* ── Brand mark ── */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+}
+
+.brand-square {
+    width: 14px;
+    height: 14px;
+    background: #d98324;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+/* ── Split layout (Login) ── */
+.auth-split {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.auth-hero {
+    flex: 1 1 50%;
+    background: #1c211e;
+    color: #fff;
+    padding: 48px 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.auth-hero .brand {
+    color: #fff;
+}
+
+.hero-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 0;
+}
+
+.hero-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.5);
+    margin-bottom: 16px;
+}
+
+.hero-headline {
+    font-size: clamp(28px, 3.5vw, 42px);
+    font-weight: 700;
+    line-height: 1.15;
+    margin: 0 0 16px;
+    letter-spacing: -.02em;
+}
+
+.hero-sub {
+    font-size: 15px;
+    color: rgba(255,255,255,.65);
+    line-height: 1.6;
+    max-width: 380px;
+    margin: 0 0 40px;
+}
+
+.hero-stats {
+    display: flex;
+    gap: 40px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 2px;
+    color: #d98324;
+}
+
+.stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.4);
+}
+
+/* ── Form panel (Login split) ── */
+.auth-form-panel {
+    flex: 1 1 50%;
+    background: #faf9f7;
+    padding: 48px 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.auth-form-panel .brand {
+    color: #1c211e;
+}
+
+.form-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 360px;
+}
+
+/* ── Centered card layout (Register / Forgot) ── */
+.auth-centered {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+}
+
+.auth-card {
+    background: #faf9f7;
+    border-radius: 12px;
+    padding: 40px 44px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+
+/* ── Common form typography ── */
+.form-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #888;
+    margin: 24px 0 6px;
+}
+
+.form-heading {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: #1c211e;
+    margin: 0 0 28px;
+}
+
+/* ── Form elements ── */
+.field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 6px;
+}
+
+.field-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+}
+
+.field-label-row .field-label { margin-bottom: 0; }
+
+.forgot-link {
+    font-size: 12px;
+    color: #57642a;
+    text-decoration: none;
+}
+.forgot-link:hover { text-decoration: underline; }
+
+.auth-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d5d2cb;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+    color: #1c211e;
+    outline: none;
+    transition: border-color .15s;
+}
+.auth-input:focus { border-color: #57642a; box-shadow: 0 0 0 3px rgba(87,100,42,.12); }
+.auth-input.is-invalid { border-color: #c0392b; }
+
+.input-wrap {
+    position: relative;
+}
+
+.input-wrap .auth-input { padding-right: 56px; }
+
+.show-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+}
+.show-toggle:hover { color: #57642a; }
+
+/* ── Password strength bar ── */
+.strength-bar {
+    height: 3px;
+    background: #e0ddd6;
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.strength-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width .3s, background .3s;
+    width: 0;
+}
+
+/* ── Remember me checkbox ── */
+.remember-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0 20px;
+}
+
+.remember-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #57642a;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.remember-row label {
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* ── Primary button ── */
+.btn-olive {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: #57642a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: center;
+    transition: background .15s;
+    margin-top: 4px;
+}
+.btn-olive:hover { background: #4a5523; }
+.btn-olive:active { background: #3d4620; }
+
+/* ── Footer links ── */
+.auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #777;
+}
+
+.auth-footer a, .auth-footer .auth-link {
+    color: #57642a;
+    text-decoration: none;
+    font-weight: 500;
+}
+.auth-footer a:hover, .auth-footer .auth-link:hover { text-decoration: underline; }
+
+.terms-text {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 11px;
+    color: #aaa;
+}
+.terms-text a { color: #888; }
+
+/* ── Validation ── */
+.validation-summary {
+    background: #fdf0ef;
+    border: 1px solid #f3c5c2;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: #c0392b;
+}
+.validation-summary ul { margin: 0; padding-left: 16px; }
+
+.field-error {
+    font-size: 12px;
+    color: #c0392b;
+    margin-top: 4px;
+}
+
+/* ── Spacer ── */
+.field-group { margin-bottom: 16px; }
+
+/* ── Back link ── */
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #57642a;
+    text-decoration: none;
+}
+.back-link:hover { text-decoration: underline; }
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+    .auth-split { flex-direction: column; }
+    .auth-hero { padding: 32px 28px; min-height: auto; }
+    .auth-form-panel { padding: 32px 28px; }
+    .hero-stats { gap: 24px; }
+    .auth-card { padding: 32px 24px; }
+}

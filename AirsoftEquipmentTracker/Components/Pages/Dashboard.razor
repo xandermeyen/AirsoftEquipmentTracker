@@ -1,5 +1,6 @@
 @page "/"
 @rendermode InteractiveServer
+@attribute [Authorize]
 
 @using System.Linq
 @using System.Globalization
@@ -127,6 +128,9 @@
 
 @code {
 
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+    private string? userId;
+
     private List<EquipmentItem> equipment = new();
 
     private int ownedCount;
@@ -143,7 +147,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        equipment = await EquipmentService.GetEquipmentAsync();
+        if (AuthState is not null)
+        {
+            var state = await AuthState;
+            userId = state.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+        equipment = await EquipmentService.GetEquipmentAsync(userId ?? string.Empty);
 
         // Totalen tellen alleen Owned items mee; de wishlist krijgt een eigen kaart
         var owned = equipment.Where(x => x.Status == EquipmentStatus.Owned).ToList();

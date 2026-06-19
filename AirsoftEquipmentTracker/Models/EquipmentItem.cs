@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AirsoftEquipmentTracker.Models
 {
@@ -32,5 +33,11 @@ namespace AirsoftEquipmentTracker.Models
 
         [MaxLength(2000, ErrorMessage = "Notes can be at most 2000 characters.")]
         public string Notes { get; set; } = string.Empty;
+
+        [MaxLength(450)]
+        public string? UserId { get; set; }
+
+        [ForeignKey(nameof(UserId))]
+        public ApplicationUser? User { get; set; }
     }
 }

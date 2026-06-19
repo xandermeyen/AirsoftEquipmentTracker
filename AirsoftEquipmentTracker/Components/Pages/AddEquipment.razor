@@ -1,5 +1,6 @@
 @page "/equipment/add"
 @rendermode InteractiveServer
+@attribute [Authorize]
 
 @using AirsoftEquipmentTracker.Models
 @inject AirsoftEquipmentTracker.Services.EquipmentService EquipmentService
@@ -22,18 +23,27 @@
 
 @code {
 
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+    private string? userId;
+
     private EquipmentItem newItem = new() { PurchaseDate = DateTime.Today };
     private List<Brand> brands = new();
     private List<Category> categories = new();
 
     protected override async Task OnInitializedAsync()
     {
+        if (AuthState is not null)
+        {
+            var state = await AuthState;
+            userId = state.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
         brands = await EquipmentService.GetBrandsAsync();
         categories = await EquipmentService.GetCategoriesAsync();
     }
 
     private async Task HandleSubmit()
     {
+        newItem.UserId = userId;
         await EquipmentService.AddEquipmentAsync(newItem);
         Navigation.NavigateTo("/equipment");
     }

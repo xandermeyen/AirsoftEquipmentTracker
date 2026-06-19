@@ -1,5 +1,6 @@
 @page "/equipment/edit/{Id:int}"
 @rendermode InteractiveServer
+@attribute [Authorize]
 
 @using AirsoftEquipmentTracker.Models
 @inject AirsoftEquipmentTracker.Services.EquipmentService EquipmentService
@@ -34,6 +35,9 @@ else
 
 @code {
 
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+    private string? userId;
+
     [Parameter] public int Id { get; set; }
 
     private EquipmentItem? editItem;
@@ -43,10 +47,16 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (AuthState is not null)
+        {
+            var state = await AuthState;
+            userId = state.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
         brands = await EquipmentService.GetBrandsAsync();
         categories = await EquipmentService.GetCategoriesAsync();
 
-        editItem = await EquipmentService.GetEquipmentByIdAsync(Id);
+        if (userId is not null)
+            editItem = await EquipmentService.GetEquipmentByIdAsync(Id, userId);
 
         if (editItem is null)
             notFound = true;

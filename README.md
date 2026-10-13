@@ -9,10 +9,9 @@ A web app I built to keep track of my airsoft gear: replicas, attachments, magaz
 
 It started as a way to practice full-stack .NET properly, end to end, instead of following along with tutorials. So next to being a useful little tool, it's the project I point to when someone asks what I can build.
 
-<!-- Add screenshots to docs/screenshots/ and uncomment:
-![Dashboard](docs/screenshots/dashboard.png)
-![Equipment overview](docs/screenshots/equipment.png)
--->
+| Dashboard | Add / edit equipment |
+| --- | --- |
+| ![Dashboard](docs/screenshots/Dashboard.png) | ![Edit equipment](docs/screenshots/EditEquipment.png) |
 
 ## What it does
 

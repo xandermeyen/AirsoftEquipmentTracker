@@ -11,7 +11,7 @@ It started as a way to practice full-stack .NET properly, end to end, instead of
 
 | Dashboard | Add / edit equipment |
 | --- | --- |
-| ![Dashboard](docs/screenshots/Dashboard_tracker.png) | ![Edit equipment](docs/screenshots/EditEquipment.png) |
+| ![Dashboard](docs/screenshots/Dashboard.png) | ![Edit equipment](docs/screenshots/EditEquipment.png) |
 
 ## What it does
 

@@ -1,0 +1,127 @@
+@page
+@model AirsoftEquipmentTracker.Pages.Account.LoginModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in — Airsoft Tracker</title>
+    <link rel="stylesheet" href="~/css/auth.css" />
+</head>
+<body class="auth-body">
+
+<div class="auth-split">
+    <!-- ── Hero panel ── -->
+    <div class="auth-hero">
+        <div class="brand">
+            <span class="brand-square"></span>
+            Airsoft Tracker
+        </div>
+
+        <div class="hero-body">
+            <p class="hero-eyebrow">Your loadout, accounted for</p>
+            <h1 class="hero-headline">Know exactly<br />what's in your kit.</h1>
+            <p class="hero-sub">
+                Replicas, attachments, magazines and spend
+                — tracked in one place. Sign in to pick up
+                where you left off.
+            </p>
+
+            <div class="hero-stats">
+                <div>
+                    <span class="stat-value">128</span>
+                    <span class="stat-label">Items</span>
+                </div>
+                <div>
+                    <span class="stat-value">€6.4k</span>
+                    <span class="stat-label">Tracked value</span>
+                </div>
+                <div>
+                    <span class="stat-value">9</span>
+                    <span class="stat-label">Categories</span>
+                </div>
+            </div>
+        </div>
+
+        <div></div><!-- spacer keeps brand at top -->
+    </div>
+
+    <!-- ── Form panel ── -->
+    <div class="auth-form-panel">
+        <div class="brand" style="color: #1c211e;">
+            <span class="brand-square"></span>
+            Airsoft Tracker
+        </div>
+
+        <div class="form-body">
+            <p class="form-eyebrow">Welcome back</p>
+            <h2 class="form-heading">Sign in</h2>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="validation-summary">
+                    <ul>
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <form method="post">
+                <input type="hidden" asp-for="ReturnUrl" />
+                <div class="field-group">
+                    <label class="field-label" for="email">Email</label>
+                    <input class="auth-input" type="email" id="email" asp-for="Input.Email"
+                           placeholder="you@example.com" autocomplete="email" />
+                    <span asp-validation-for="Input.Email" class="field-error"></span>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label-row">
+                        <label class="field-label" for="password">Password</label>
+                        <a class="forgot-link" href="/Account/ForgotPassword">Forgot?</a>
+                    </div>
+                    <div class="input-wrap">
+                        <input class="auth-input" type="password" id="password" asp-for="Input.Password"
+                               placeholder="••••••••" autocomplete="current-password" />
+                        <button type="button" class="show-toggle" onclick="togglePassword('password', this)">Show</button>
+                    </div>
+                    <span asp-validation-for="Input.Password" class="field-error"></span>
+                </div>
+
+                <div class="remember-row">
+                    <input type="checkbox" id="remember" asp-for="Input.RememberMe" />
+                    <label for="remember">Keep me signed in</label>
+                </div>
+
+                <button type="submit" class="btn-olive">Sign in</button>
+            </form>
+
+            <p class="auth-footer">
+                New here? <a href="/Account/Register">Create an account</a>
+            </p>
+        </div>
+
+        <div></div>
+    </div>
+</div>
+
+<script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.textContent = 'Hide';
+        } else {
+            input.type = 'password';
+            btn.textContent = 'Show';
+        }
+    }
+</script>
+</body>
+</html>

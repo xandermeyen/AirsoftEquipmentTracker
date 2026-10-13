@@ -13,10 +13,11 @@ public class EquipmentService
         _contextFactory = contextFactory;
     }
 
-    public async Task<List<EquipmentItem>> GetEquipmentAsync()
+    public async Task<List<EquipmentItem>> GetEquipmentAsync(string userId)
     {
         using var context = _contextFactory.CreateDbContext();
         return await context.EquipmentItems
+            .Where(e => e.UserId == userId)
             .Include(e => e.Brand)
             .Include(e => e.Category)
             .OrderBy(e => e.Name)
@@ -39,8 +40,6 @@ public class EquipmentService
             .ToListAsync();
     }
 
-    // Maakt een merk aan, of geeft het bestaande terug als de naam al bestaat.
-    // SQL Server vergelijkt standaard hoofdletterongevoelig, dus "VFC" == "vfc".
     public async Task<Brand> AddBrandAsync(string name)
     {
         using var context = _contextFactory.CreateDbContext();
@@ -56,7 +55,6 @@ public class EquipmentService
         return brand;
     }
 
-    // Zelfde aanpak voor categorieen.
     public async Task<Category> AddCategoryAsync(string name)
     {
         using var context = _contextFactory.CreateDbContext();
@@ -81,33 +79,31 @@ public class EquipmentService
         await context.SaveChangesAsync();
     }
 
-    // Haalt een enkel item op via id, inclusief Brand + Category.
-    // Geeft null terug als het item niet bestaat (bv. ongeldige edit-url).
-    public async Task<EquipmentItem?> GetEquipmentByIdAsync(int id)
+    // UserId is included in the filter so a user can never read another user's item.
+    public async Task<EquipmentItem?> GetEquipmentByIdAsync(int id, string userId)
     {
         using var context = _contextFactory.CreateDbContext();
         return await context.EquipmentItems
             .Include(e => e.Brand)
             .Include(e => e.Category)
-            .FirstOrDefaultAsync(e => e.Id == id);
+            .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
     }
 
     public async Task UpdateEquipmentAsync(EquipmentItem item)
     {
         using var context = _contextFactory.CreateDbContext();
-        // Navigatie-props leegmaken zodat EF enkel via de foreign keys koppelt
         item.Brand = null;
         item.Category = null;
         context.EquipmentItems.Update(item);
         await context.SaveChangesAsync();
     }
 
-    public async Task DeleteEquipmentAsync(int id)
+    public async Task DeleteEquipmentAsync(int id, string userId)
     {
         using var context = _contextFactory.CreateDbContext();
-        var item = await context.EquipmentItems.FindAsync(id);
+        var item = await context.EquipmentItems
+            .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
 
-        // Niets te doen als het item al weg is
         if (item is null)
             return;
 
@@ -115,8 +111,6 @@ public class EquipmentService
         await context.SaveChangesAsync();
     }
 
-    // Telt per merk hoeveel equipment items ernaar verwijzen.
-    // De beheerpagina gebruikt dit om delete te blokkeren met een nette melding.
     public async Task<Dictionary<int, int>> GetBrandUsageCountsAsync()
     {
         using var context = _contextFactory.CreateDbContext();
@@ -126,7 +120,6 @@ public class EquipmentService
             .ToDictionaryAsync(x => x.Key, x => x.Count);
     }
 
-    // Zelfde idee, maar per categorie.
     public async Task<Dictionary<int, int>> GetCategoryUsageCountsAsync()
     {
         using var context = _contextFactory.CreateDbContext();
@@ -136,8 +129,6 @@ public class EquipmentService
             .ToDictionaryAsync(x => x.Key, x => x.Count);
     }
 
-    // Hernoemt een merk. Geeft false terug als het merk niet bestaat
-    // of als de nieuwe naam al door een ander merk gebruikt wordt.
     public async Task<bool> RenameBrandAsync(int id, string newName)
     {
         using var context = _contextFactory.CreateDbContext();
@@ -149,7 +140,6 @@ public class EquipmentService
         if (string.IsNullOrWhiteSpace(trimmed))
             return false;
 
-        // Unieke index op Name, dus eerst checken op een duplicaat
         var duplicate = await context.Brands.AnyAsync(b => b.Id != id && b.Name == trimmed);
         if (duplicate)
             return false;
@@ -179,9 +169,6 @@ public class EquipmentService
         return true;
     }
 
-    // Verwijdert een merk, maar alleen als geen enkel item er nog naar verwijst.
-    // De database heeft DeleteBehavior.Restrict, dus zonder deze check zou
-    // SaveChanges een exception gooien.
     public async Task<bool> DeleteBrandAsync(int id)
     {
         using var context = _contextFactory.CreateDbContext();

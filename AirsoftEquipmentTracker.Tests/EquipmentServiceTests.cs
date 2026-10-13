@@ -13,6 +13,10 @@ public class EquipmentServiceTests : IDisposable
     private readonly TestDbContextFactory _factory;
     private readonly EquipmentService _service;
 
+    // IDs komen uit de factory zodat ze consistent zijn met de geseedde gebruikers.
+    private const string TestUserId  = TestDbContextFactory.TestUserId;
+    private const string OtherUserId = TestDbContextFactory.OtherUserId;
+
     public EquipmentServiceTests()
     {
         _factory = new TestDbContextFactory();
@@ -29,7 +33,8 @@ public class EquipmentServiceTests : IDisposable
         CategoryId = 1,
         Price = 99.95m,
         PurchaseDate = new DateTime(2025, 1, 15),
-        Notes = "Test item"
+        Notes = "Test item",
+        UserId = TestUserId
     };
 
     // ---------- Add / edit / delete ----------
@@ -41,11 +46,11 @@ public class EquipmentServiceTests : IDisposable
 
         await _service.AddEquipmentAsync(item);
 
-        var saved = await _service.GetEquipmentByIdAsync(item.Id);
+        var saved = await _service.GetEquipmentByIdAsync(item.Id, TestUserId);
         Assert.NotNull(saved);
         Assert.Equal("Test Replica", saved.Name);
         Assert.Equal(99.95m, saved.Price);
-        Assert.NotNull(saved.Brand);      // Include werkt
+        Assert.NotNull(saved.Brand);
         Assert.NotNull(saved.Category);
     }
 
@@ -55,13 +60,13 @@ public class EquipmentServiceTests : IDisposable
         var item = NewItem();
         await _service.AddEquipmentAsync(item);
 
-        var toEdit = await _service.GetEquipmentByIdAsync(item.Id);
+        var toEdit = await _service.GetEquipmentByIdAsync(item.Id, TestUserId);
         toEdit!.Name = "Renamed Replica";
         toEdit.Price = 150m;
         toEdit.Status = EquipmentStatus.Sold;
         await _service.UpdateEquipmentAsync(toEdit);
 
-        var updated = await _service.GetEquipmentByIdAsync(item.Id);
+        var updated = await _service.GetEquipmentByIdAsync(item.Id, TestUserId);
         Assert.NotNull(updated);
         Assert.Equal("Renamed Replica", updated.Name);
         Assert.Equal(150m, updated.Price);
@@ -74,9 +79,9 @@ public class EquipmentServiceTests : IDisposable
         var item = NewItem();
         await _service.AddEquipmentAsync(item);
 
-        await _service.DeleteEquipmentAsync(item.Id);
+        await _service.DeleteEquipmentAsync(item.Id, TestUserId);
 
-        var deleted = await _service.GetEquipmentByIdAsync(item.Id);
+        var deleted = await _service.GetEquipmentByIdAsync(item.Id, TestUserId);
         Assert.Null(deleted);
     }
 
@@ -84,14 +89,38 @@ public class EquipmentServiceTests : IDisposable
     public async Task DeleteEquipment_UnknownId_DoesNotThrow()
     {
         // Mag gewoon niets doen, geen exception
-        await _service.DeleteEquipmentAsync(999_999);
+        await _service.DeleteEquipmentAsync(999_999, TestUserId);
     }
 
     [Fact]
     public async Task GetEquipmentById_UnknownId_ReturnsNull()
     {
-        var result = await _service.GetEquipmentByIdAsync(999_999);
+        var result = await _service.GetEquipmentByIdAsync(999_999, TestUserId);
         Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetEquipmentById_WrongUser_ReturnsNull()
+    {
+        // Een item van TestUserId mag OtherUserId niet kunnen ophalen.
+        var item = NewItem();
+        await _service.AddEquipmentAsync(item);
+
+        var result = await _service.GetEquipmentByIdAsync(item.Id, OtherUserId);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DeleteEquipment_WrongUser_DoesNotRemoveItem()
+    {
+        // Een andere gebruiker mag het item niet verwijderen.
+        var item = NewItem();
+        await _service.AddEquipmentAsync(item);
+
+        await _service.DeleteEquipmentAsync(item.Id, OtherUserId);
+
+        var still = await _service.GetEquipmentByIdAsync(item.Id, TestUserId);
+        Assert.NotNull(still);
     }
 
     // ---------- AddBrandAsync dedupe ----------
@@ -145,7 +174,12 @@ public class EquipmentServiceTests : IDisposable
     [Fact]
     public async Task DeleteBrand_InUse_ReturnsFalse_AndKeepsBrand()
     {
-        // Seed-merk 1 (Novritsch) wordt gebruikt door seed-item 1
+        // Voeg zelf een item toe dat merk 1 (Novritsch) gebruikt,
+        // want de equipment seed-data is verwijderd (items zijn nu gebruikersgebonden).
+        var item = NewItem();
+        item.BrandId = 1;
+        await _service.AddEquipmentAsync(item);
+
         var result = await _service.DeleteBrandAsync(1);
 
         Assert.False(result);
@@ -168,7 +202,11 @@ public class EquipmentServiceTests : IDisposable
     [Fact]
     public async Task DeleteCategory_InUse_ReturnsFalse()
     {
-        // Seed-categorie 1 (Primary) wordt gebruikt door seed-item 1
+        // Zelfde redenering: voeg zelf een item toe dat categorie 1 (Primary) gebruikt.
+        var item = NewItem();
+        item.CategoryId = 1;
+        await _service.AddEquipmentAsync(item);
+
         var result = await _service.DeleteCategoryAsync(1);
 
         Assert.False(result);
@@ -177,8 +215,11 @@ public class EquipmentServiceTests : IDisposable
     [Fact]
     public async Task Database_RestrictsDeletingReferencedBrand()
     {
-        // Rechtstreeks in de database een merk verwijderen dat nog
-        // gebruikt wordt, moet falen door DeleteBehavior.Restrict.
+        // Zelfde als hierboven: voeg eerst een item toe dat merk 1 gebruikt.
+        var item = NewItem();
+        item.BrandId = 1;
+        await _service.AddEquipmentAsync(item);
+
         using var context = _factory.CreateDbContext();
         var brand = await context.Brands.FindAsync(1);
 

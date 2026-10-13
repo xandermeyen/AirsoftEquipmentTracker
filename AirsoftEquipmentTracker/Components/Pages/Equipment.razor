@@ -1,5 +1,6 @@
 @page "/equipment"
 @rendermode InteractiveServer
+@attribute [Authorize]
 
 @using AirsoftEquipmentTracker.Models
 @inject AirsoftEquipmentTracker.Services.EquipmentService EquipmentService
@@ -167,6 +168,9 @@ else
 }
 
     @code {
+        [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+        private string? userId;
+
         private List<EquipmentItem> equipment = new();
         private string selectedCategory = "All";
         private string selectedStatus = "All";
@@ -218,7 +222,13 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        equipment = await EquipmentService.GetEquipmentAsync();
+        if (AuthState is not null)
+        {
+            var state = await AuthState;
+            userId = state.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+        if (userId is not null)
+            equipment = await EquipmentService.GetEquipmentAsync(userId);
         isLoading = false;
     }
 
@@ -258,12 +268,14 @@ else
 
         var imagePath = itemToDelete.ImagePath;
 
-        await EquipmentService.DeleteEquipmentAsync(itemToDelete.Id);
+        if (userId is not null)
+            await EquipmentService.DeleteEquipmentAsync(itemToDelete.Id, userId);
 
         // Foto pas opruimen nadat het item zelf weg is
         Images.DeleteImage(imagePath);
 
         itemToDelete = null;
-        equipment = await EquipmentService.GetEquipmentAsync();
+        if (userId is not null)
+            equipment = await EquipmentService.GetEquipmentAsync(userId);
     }
 }

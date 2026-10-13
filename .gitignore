@@ -92,3 +92,6 @@ AirsoftEquipmentTracker/wwwroot/uploads/
 #  Claude Code
 # ==========================================
 .claude/
+
+# Backup files
+*.bak

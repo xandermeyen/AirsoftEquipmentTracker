@@ -10,13 +10,16 @@ public class RegisterModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly IConfiguration _configuration;
 
     public RegisterModel(
         UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager)
+        SignInManager<ApplicationUser> signInManager,
+        IConfiguration configuration)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _configuration = configuration;
     }
 
     [BindProperty]
@@ -53,6 +56,14 @@ public class RegisterModel : PageModel
 
         if (result.Succeeded)
         {
+            // Registreert het account uit "AdminEmail" zich, dan krijgt het meteen de Admin-rol
+            var adminEmail = _configuration["AdminEmail"];
+            if (!string.IsNullOrWhiteSpace(adminEmail) &&
+                string.Equals(adminEmail, Input.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                await _userManager.AddToRoleAsync(user, AppRoles.Admin);
+            }
+
             await _signInManager.SignInAsync(user, isPersistent: false);
             return LocalRedirect("/");
         }

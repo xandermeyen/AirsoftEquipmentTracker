@@ -51,6 +51,17 @@ builder.Services.AddSingleton<ImageService>();
 
 var app = builder.Build();
 
+// Admin-rol aanmaken en toekennen aan het account uit "AdminEmail" (user-secrets).
+// Mislukt dit (bv. database draait niet), dan start de app toch, maar loggen we het.
+try
+{
+    await AdminSeeder.EnsureAdminAsync(app.Services, app.Configuration, app.Logger);
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex, "Kon de Admin-rol niet instellen.");
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);

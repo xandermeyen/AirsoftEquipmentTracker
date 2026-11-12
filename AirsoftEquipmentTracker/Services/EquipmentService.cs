@@ -89,13 +89,23 @@ public class EquipmentService
             .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
     }
 
-    public async Task UpdateEquipmentAsync(EquipmentItem item)
+    // Geeft false terug als het item niet bestaat of niet van deze gebruiker is.
+    // UserId wordt altijd overschreven, zodat een item nooit van eigenaar kan wisselen.
+    public async Task<bool> UpdateEquipmentAsync(EquipmentItem item, string userId)
     {
         using var context = _contextFactory.CreateDbContext();
+
+        var ownsItem = await context.EquipmentItems
+            .AnyAsync(e => e.Id == item.Id && e.UserId == userId);
+        if (!ownsItem)
+            return false;
+
+        item.UserId = userId;
         item.Brand = null;
         item.Category = null;
         context.EquipmentItems.Update(item);
         await context.SaveChangesAsync();
+        return true;
     }
 
     public async Task DeleteEquipmentAsync(int id, string userId)

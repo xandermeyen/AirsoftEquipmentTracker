@@ -218,7 +218,11 @@
         Model.BrandId = selectedBrandId;
         Model.CategoryId = selectedCategoryId;
 
-        // Foto opslaan (en de oude vervangen) als er een nieuwe gekozen is
+        // Nieuwe foto eerst opslaan. De oude pas verwijderen nadat het item zelf
+        // bewaard is, anders wijst de database naar een foto die niet meer bestaat.
+        var oldImage = Model.ImagePath;
+        string? newImage = null;
+
         if (selectedImage is not null)
         {
             var imageError = ImageService.Validate(selectedImage);
@@ -230,9 +234,8 @@
 
             try
             {
-                var oldImage = Model.ImagePath;
-                Model.ImagePath = await Images.SaveImageAsync(selectedImage);
-                Images.DeleteImage(oldImage);
+                newImage = await Images.SaveImageAsync(selectedImage);
+                Model.ImagePath = newImage;
             }
             catch (Exception)
             {
@@ -247,7 +250,29 @@
         }
         catch (Exception)
         {
+            // Opslaan mislukt: nieuwe foto opruimen en de oude terugzetten
+            if (newImage is not null)
+            {
+                Images.DeleteImage(newImage);
+                Model.ImagePath = oldImage;
+            }
+
             error = "Something went wrong while saving. Please try again.";
+            return;
+        }
+
+        // Item is bewaard, nu mag de vervangen foto weg
+        if (newImage is not null)
+        {
+            try
+            {
+                Images.DeleteImage(oldImage);
+            }
+            catch (IOException)
+            {
+                // Het item is wel goed opgeslagen. De oude foto blijft dan
+                // als los bestand staan, dat is geen probleem voor de gebruiker.
+            }
         }
     }
 

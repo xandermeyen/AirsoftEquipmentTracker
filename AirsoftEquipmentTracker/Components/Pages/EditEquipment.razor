@@ -64,7 +64,12 @@ else
 
     private async Task HandleSubmit()
     {
-        await EquipmentService.UpdateEquipmentAsync(editItem!);
+        // Gooit bij een mislukte update, zodat EquipmentForm de fout toont
+        // en een eventueel nieuwe foto weer opruimt.
+        var updated = await EquipmentService.UpdateEquipmentAsync(editItem!, userId!);
+        if (!updated)
+            throw new InvalidOperationException("Equipment item not found for this user.");
+
         Navigation.NavigateTo("/equipment");
     }
 

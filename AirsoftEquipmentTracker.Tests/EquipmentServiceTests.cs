@@ -64,13 +64,43 @@ public class EquipmentServiceTests : IDisposable
         toEdit!.Name = "Renamed Replica";
         toEdit.Price = 150m;
         toEdit.Status = EquipmentStatus.Sold;
-        await _service.UpdateEquipmentAsync(toEdit);
+        var result = await _service.UpdateEquipmentAsync(toEdit, TestUserId);
+        Assert.True(result);
 
         var updated = await _service.GetEquipmentByIdAsync(item.Id, TestUserId);
         Assert.NotNull(updated);
         Assert.Equal("Renamed Replica", updated.Name);
         Assert.Equal(150m, updated.Price);
         Assert.Equal(EquipmentStatus.Sold, updated.Status);
+    }
+
+    [Fact]
+    public async Task UpdateEquipment_OtherUser_IsRejected()
+    {
+        var item = NewItem();
+        await _service.AddEquipmentAsync(item);
+
+        var toEdit = await _service.GetEquipmentByIdAsync(item.Id, TestUserId);
+        toEdit!.Name = "Hijacked";
+        var result = await _service.UpdateEquipmentAsync(toEdit, OtherUserId);
+
+        Assert.False(result);
+        var unchanged = await _service.GetEquipmentByIdAsync(item.Id, TestUserId);
+        Assert.Equal("Test Replica", unchanged!.Name);
+    }
+
+    [Fact]
+    public async Task UpdateEquipment_CannotChangeOwner()
+    {
+        var item = NewItem();
+        await _service.AddEquipmentAsync(item);
+
+        var toEdit = await _service.GetEquipmentByIdAsync(item.Id, TestUserId);
+        toEdit!.UserId = OtherUserId;
+        await _service.UpdateEquipmentAsync(toEdit, TestUserId);
+
+        Assert.NotNull(await _service.GetEquipmentByIdAsync(item.Id, TestUserId));
+        Assert.Null(await _service.GetEquipmentByIdAsync(item.Id, OtherUserId));
     }
 
     [Fact]

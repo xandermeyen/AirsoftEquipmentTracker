@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace AirsoftEquipmentTracker.Migrations
+namespace AirsoftEquipmentTracker.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class AddValidationConstraints : Migration

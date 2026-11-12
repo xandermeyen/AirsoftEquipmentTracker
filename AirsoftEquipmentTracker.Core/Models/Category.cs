@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace AirsoftEquipmentTracker.Models
+namespace AirsoftEquipmentTracker.Core.Models
 {
     public class Category
     {

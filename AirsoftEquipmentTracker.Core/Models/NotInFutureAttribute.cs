@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace AirsoftEquipmentTracker.Models
+namespace AirsoftEquipmentTracker.Core.Models
 {
     // Validatieattribuut: de datum mag niet in de toekomst liggen.
     // Vergelijkt op datum (niet op tijd), dus vandaag is nog geldig.

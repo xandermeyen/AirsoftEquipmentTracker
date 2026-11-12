@@ -1,4 +1,5 @@
-using AirsoftEquipmentTracker.Models;
+using AirsoftEquipmentTracker.Core.Models;
+using AirsoftEquipmentTracker.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;

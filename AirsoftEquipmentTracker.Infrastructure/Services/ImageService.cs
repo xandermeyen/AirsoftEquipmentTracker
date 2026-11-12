@@ -1,4 +1,4 @@
-namespace AirsoftEquipmentTracker.Services;
+namespace AirsoftEquipmentTracker.Infrastructure.Services;
 
 // Bewaart en verwijdert foto's voor equipment items.
 // Werkt met een gewone Stream, zodat zowel Blazor (IBrowserFile) als een API (IFormFile) hem kan gebruiken.

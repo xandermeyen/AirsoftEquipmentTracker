@@ -1,13 +1,16 @@
-using AirsoftEquipmentTracker.Models;
+using AirsoftEquipmentTracker.Core.Models;
+using AirsoftEquipmentTracker.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-namespace AirsoftEquipmentTracker.Data;
+namespace AirsoftEquipmentTracker.Infrastructure.Data;
 
-// Zorgt bij het opstarten dat de Admin-rol bestaat en geeft die aan het account
-// uit de config-waarde "AdminEmail" (zet die in user-secrets, niet in appsettings.json).
+// Zorgt bij het opstarten dat de Admin-rol bestaat en geeft die aan het account met adminEmail.
+// Die waarde komt uit de config ("AdminEmail" in user-secrets, niet in appsettings.json).
 public static class AdminSeeder
 {
-    public static async Task EnsureAdminAsync(IServiceProvider services, IConfiguration config, ILogger logger)
+    public static async Task EnsureAdminAsync(IServiceProvider services, string? adminEmail, ILogger logger)
     {
         using var scope = services.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -16,7 +19,6 @@ public static class AdminSeeder
         if (!await roleManager.RoleExistsAsync(AppRoles.Admin))
             await roleManager.CreateAsync(new IdentityRole(AppRoles.Admin));
 
-        var adminEmail = config["AdminEmail"];
         if (string.IsNullOrWhiteSpace(adminEmail))
         {
             logger.LogWarning("Geen AdminEmail ingesteld. Niemand kan brands en categorieën beheren.");

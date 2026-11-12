@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AirsoftEquipmentTracker.Models
+namespace AirsoftEquipmentTracker.Core.Models
 {
     public class EquipmentItem
     {
@@ -34,10 +33,10 @@ namespace AirsoftEquipmentTracker.Models
         [MaxLength(2000, ErrorMessage = "Notes can be at most 2000 characters.")]
         public string Notes { get; set; } = string.Empty;
 
+        // Id van de eigenaar (AspNetUsers). Bewust zonder navigation property naar
+        // ApplicationUser, zodat Core niets van Identity hoeft te weten.
+        // De relatie wordt ingesteld in AppDbContext.
         [MaxLength(450)]
         public string? UserId { get; set; }
-
-        [ForeignKey(nameof(UserId))]
-        public ApplicationUser? User { get; set; }
     }
 }

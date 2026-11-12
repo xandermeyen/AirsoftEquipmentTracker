@@ -1,8 +1,9 @@
-using AirsoftEquipmentTracker.Models;
+using AirsoftEquipmentTracker.Core.Models;
+using AirsoftEquipmentTracker.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace AirsoftEquipmentTracker.Data
+namespace AirsoftEquipmentTracker.Infrastructure.Data
 {
     public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
@@ -33,8 +34,10 @@ namespace AirsoftEquipmentTracker.Data
                 .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Geen navigation property op EquipmentItem (zie daar), dus het type expliciet
+            // meegeven. Het databaseschema blijft hetzelfde: zelfde FK, zelfde cascade.
             modelBuilder.Entity<EquipmentItem>()
-                .HasOne(e => e.User)
+                .HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);

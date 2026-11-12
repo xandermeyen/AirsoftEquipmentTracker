@@ -1,5 +1,5 @@
 using System.Text;
-using AirsoftEquipmentTracker.Services;
+using AirsoftEquipmentTracker.Infrastructure.Services;
 using Xunit;
 
 namespace AirsoftEquipmentTracker.Tests;

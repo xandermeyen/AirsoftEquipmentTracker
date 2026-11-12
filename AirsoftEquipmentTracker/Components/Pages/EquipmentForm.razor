@@ -225,7 +225,7 @@
 
         if (selectedImage is not null)
         {
-            var imageError = ImageService.Validate(selectedImage);
+            var imageError = ImageService.Validate(selectedImage.Name, selectedImage.Size);
             if (imageError is not null)
             {
                 error = imageError;
@@ -234,7 +234,8 @@
 
             try
             {
-                newImage = await Images.SaveImageAsync(selectedImage);
+                await using var imageStream = selectedImage.OpenReadStream(ImageService.MaxFileSize);
+                newImage = await Images.SaveImageAsync(imageStream, selectedImage.Name, selectedImage.Size);
                 Model.ImagePath = newImage;
             }
             catch (Exception)

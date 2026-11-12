@@ -79,6 +79,34 @@ public class EquipmentService
         await context.SaveChangesAsync();
     }
 
+    // Berekent de dashboardcijfers voor één gebruiker.
+    // Dit stond vroeger in Dashboard.razor; hier is het herbruikbaar (bv. in een API) en testbaar.
+    public async Task<DashboardStats> GetDashboardStatsAsync(string userId)
+    {
+        var equipment = await GetEquipmentAsync(userId);
+        var owned = equipment.Where(x => x.Status == EquipmentStatus.Owned).ToList();
+
+        var categoryBreakdown = owned
+            .Where(x => !string.IsNullOrWhiteSpace(x.Category?.Name))
+            .GroupBy(x => x.Category!.Name)
+            .Select(group => new CategoryCount(group.Key, group.Count()))
+            .OrderBy(x => x.Name)
+            .ToList();
+
+        return new DashboardStats(
+            OwnedCount: owned.Count,
+            OwnedValue: owned.Sum(x => x.Price),
+            WishlistValue: equipment
+                .Where(x => x.Status == EquipmentStatus.Wishlist)
+                .Sum(x => x.Price),
+            CategoriesUsed: categoryBreakdown.Count,
+            RecentItems: owned
+                .OrderByDescending(x => x.PurchaseDate)
+                .Take(3)
+                .ToList(),
+            CategoryBreakdown: categoryBreakdown);
+    }
+
     // UserId is included in the filter so a user can never read another user's item.
     public async Task<EquipmentItem?> GetEquipmentByIdAsync(int id, string userId)
     {

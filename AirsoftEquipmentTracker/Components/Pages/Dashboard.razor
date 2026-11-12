@@ -26,7 +26,7 @@
         <div class="card h-100">
             <div class="card-body">
                 <p class="eyebrow mb-2">Owned Items</p>
-                <p class="stat-value mb-0">@ownedCount</p>
+                <p class="stat-value mb-0">@stats.OwnedCount</p>
             </div>
         </div>
     </div>
@@ -35,7 +35,7 @@
         <div class="card h-100">
             <div class="card-body">
                 <p class="eyebrow mb-2">Total Value (Owned)</p>
-                <p class="stat-value accent mb-0">€ @totalValue.ToString("0.00")</p>
+                <p class="stat-value accent mb-0">€ @stats.OwnedValue.ToString("0.00")</p>
             </div>
         </div>
     </div>
@@ -44,7 +44,7 @@
         <div class="card h-100">
             <div class="card-body">
                 <p class="eyebrow mb-2">Wishlist Value</p>
-                <p class="stat-value mb-0">€ @wishlistValue.ToString("0.00")</p>
+                <p class="stat-value mb-0">€ @stats.WishlistValue.ToString("0.00")</p>
             </div>
         </div>
     </div>
@@ -53,7 +53,7 @@
         <div class="card h-100">
             <div class="card-body">
                 <p class="eyebrow mb-2">Categories Used</p>
-                <p class="stat-value mb-0">@categoryCount</p>
+                <p class="stat-value mb-0">@stats.CategoriesUsed</p>
             </div>
         </div>
     </div>
@@ -63,7 +63,7 @@
     <h3 class="mb-3">Category Breakdown</h3>
 
     <div class="row g-4">
-        @foreach (var category in categoryBreakdown)
+        @foreach (var category in stats.CategoryBreakdown)
         {
             <div class="col-md-6 col-xl-3">
                 <div class="card h-100">
@@ -80,10 +80,10 @@
 <div>
     <h3 class="mb-3">Recent Items</h3>
 
-    @if (recentEquipment.Any())
+    @if (stats.RecentItems.Any())
     {
         <div class="row g-4">
-            @foreach (var item in recentEquipment)
+            @foreach (var item in stats.RecentItems)
             {
                 <div class="col-md-6 col-xl-4">
                     <div class="card h-100">
@@ -129,74 +129,25 @@
 @code {
 
     [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
-    private string? userId;
 
-    private List<EquipmentItem> equipment = new();
-
-    private int ownedCount;
-
-    private decimal totalValue;
-
-    private decimal wishlistValue;
-
-    private int categoryCount;
-
-    private List<EquipmentItem> recentEquipment = new();
-
-    private List<CategoryStat> categoryBreakdown = new();
+    // Alle berekeningen gebeuren in EquipmentService.GetDashboardStatsAsync
+    private DashboardStats stats = DashboardStats.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        string? userId = null;
         if (AuthState is not null)
         {
             var state = await AuthState;
             userId = state.User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
-        equipment = await EquipmentService.GetEquipmentAsync(userId ?? string.Empty);
 
-        // Totalen tellen alleen Owned items mee; de wishlist krijgt een eigen kaart
-        var owned = equipment.Where(x => x.Status == EquipmentStatus.Owned).ToList();
-
-        ownedCount = owned.Count;
-
-        totalValue = owned.Sum(x => x.Price);
-
-        wishlistValue = equipment
-            .Where(x => x.Status == EquipmentStatus.Wishlist)
-            .Sum(x => x.Price);
-
-        categoryCount = owned
-            .Select(x => x.Category?.Name)
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .Distinct()
-            .Count();
-
-        recentEquipment = owned
-            .OrderByDescending(x => x.PurchaseDate)
-            .Take(3)
-            .ToList();
-
-        categoryBreakdown = owned
-            .Where(x => !string.IsNullOrWhiteSpace(x.Category?.Name))
-            .GroupBy(x => x.Category!.Name)
-            .Select(group => new CategoryStat
-            {
-                Name = group.Key,
-                Count = group.Count()
-            })
-            .OrderBy(x => x.Name)
-            .ToList();
+        if (userId is not null)
+            stats = await EquipmentService.GetDashboardStatsAsync(userId);
     }
 
     private void GoToEquipment()
     {
         Navigation.NavigateTo("/equipment");
     }
-
-    private class CategoryStat
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Count { get; set; }
-    }
-
 }

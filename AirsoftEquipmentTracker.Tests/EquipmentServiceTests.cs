@@ -153,6 +153,80 @@ public class EquipmentServiceTests : IDisposable
         Assert.NotNull(still);
     }
 
+    // ---------- Dashboard ----------
+
+    [Fact]
+    public async Task DashboardStats_CountsOnlyOwnedItems_AndWishlistSeparately()
+    {
+        var owned = NewItem("Owned");
+        owned.Price = 100m;
+        var sold = NewItem("Sold");
+        sold.Price = 50m;
+        sold.Status = EquipmentStatus.Sold;
+        var wish = NewItem("Wish");
+        wish.Price = 30m;
+        wish.Status = EquipmentStatus.Wishlist;
+        await _service.AddEquipmentAsync(owned);
+        await _service.AddEquipmentAsync(sold);
+        await _service.AddEquipmentAsync(wish);
+
+        var stats = await _service.GetDashboardStatsAsync(TestUserId);
+
+        Assert.Equal(1, stats.OwnedCount);
+        Assert.Equal(100m, stats.OwnedValue);
+        Assert.Equal(30m, stats.WishlistValue);
+    }
+
+    [Fact]
+    public async Task DashboardStats_RecentItems_AreNewestThreeOwned()
+    {
+        for (var day = 1; day <= 4; day++)
+        {
+            var item = NewItem($"Item {day}");
+            item.PurchaseDate = new DateTime(2025, 1, day);
+            await _service.AddEquipmentAsync(item);
+        }
+
+        var stats = await _service.GetDashboardStatsAsync(TestUserId);
+
+        Assert.Equal(new[] { "Item 4", "Item 3", "Item 2" }, stats.RecentItems.Select(x => x.Name));
+    }
+
+    [Fact]
+    public async Task DashboardStats_CategoryBreakdown_GroupsByCategory()
+    {
+        var a = NewItem("A");
+        a.CategoryId = 1;
+        var b = NewItem("B");
+        b.CategoryId = 1;
+        var c = NewItem("C");
+        c.CategoryId = 3;
+        await _service.AddEquipmentAsync(a);
+        await _service.AddEquipmentAsync(b);
+        await _service.AddEquipmentAsync(c);
+
+        var stats = await _service.GetDashboardStatsAsync(TestUserId);
+
+        Assert.Equal(2, stats.CategoriesUsed);
+        Assert.Contains(stats.CategoryBreakdown, x => x.Name == "Primary" && x.Count == 2);
+        Assert.Contains(stats.CategoryBreakdown, x => x.Name == "Gear" && x.Count == 1);
+    }
+
+    [Fact]
+    public async Task DashboardStats_IgnoresOtherUsersItems()
+    {
+        var mine = NewItem("Mine");
+        var theirs = NewItem("Theirs");
+        theirs.UserId = OtherUserId;
+        await _service.AddEquipmentAsync(mine);
+        await _service.AddEquipmentAsync(theirs);
+
+        var stats = await _service.GetDashboardStatsAsync(TestUserId);
+
+        Assert.Equal(1, stats.OwnedCount);
+        Assert.Single(stats.RecentItems, x => x.Name == "Mine");
+    }
+
     // ---------- AddBrandAsync dedupe ----------
 
     [Fact]

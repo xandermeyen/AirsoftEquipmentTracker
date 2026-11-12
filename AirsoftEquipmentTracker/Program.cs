@@ -47,7 +47,9 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddSingleton<EquipmentService>();
-builder.Services.AddSingleton<ImageService>();
+// ImageService krijgt alleen een map mee, zodat hij niet afhangt van ASP.NET zelf
+builder.Services.AddSingleton(sp => new ImageService(
+    Path.Combine(sp.GetRequiredService<IWebHostEnvironment>().WebRootPath, ImageService.UploadsFolderName)));
 
 var app = builder.Build();
 

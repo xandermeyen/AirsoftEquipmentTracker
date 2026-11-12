@@ -1,9 +1,9 @@
 using AirsoftEquipmentTracker.Components;
-using AirsoftEquipmentTracker.Data;
-using AirsoftEquipmentTracker.Models;
-using AirsoftEquipmentTracker.Services;
+using AirsoftEquipmentTracker.Infrastructure;
+using AirsoftEquipmentTracker.Infrastructure.Data;
+using AirsoftEquipmentTracker.Infrastructure.Identity;
+using AirsoftEquipmentTracker.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,10 +13,11 @@ builder.Services.AddRazorComponents()
 // Razor Pages needed for the auth pages (login, register, forgot password, logout)
 builder.Services.AddRazorPages();
 
-// AddDbContextFactory also registers AppDbContext as scoped (EF Core 5+),
-// so Identity can resolve it without a separate AddDbContext call.
-builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Database en services (EquipmentService, ImageService) uit het Infrastructure-project
+builder.Services.AddInfrastructure(
+    builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' ontbreekt."),
+    Path.Combine(builder.Environment.WebRootPath, ImageService.UploadsFolderName));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -46,10 +47,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 // CascadingAuthenticationState makes auth state available in all Blazor components
 builder.Services.AddCascadingAuthenticationState();
 
-builder.Services.AddSingleton<EquipmentService>();
-// ImageService krijgt alleen een map mee, zodat hij niet afhangt van ASP.NET zelf
-builder.Services.AddSingleton(sp => new ImageService(
-    Path.Combine(sp.GetRequiredService<IWebHostEnvironment>().WebRootPath, ImageService.UploadsFolderName)));
 
 var app = builder.Build();
 
@@ -57,7 +54,7 @@ var app = builder.Build();
 // Mislukt dit (bv. database draait niet), dan start de app toch, maar loggen we het.
 try
 {
-    await AdminSeeder.EnsureAdminAsync(app.Services, app.Configuration, app.Logger);
+    await AdminSeeder.EnsureAdminAsync(app.Services, app.Configuration["AdminEmail"], app.Logger);
 }
 catch (Exception ex)
 {

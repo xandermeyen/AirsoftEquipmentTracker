@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="AirsoftEquipmentTracker/AirsoftEquipmentTracker.csproj" />
+  <Project Path="AirsoftEquipmentTracker.Core/AirsoftEquipmentTracker.Core.csproj" />
+  <Project Path="AirsoftEquipmentTracker.Infrastructure/AirsoftEquipmentTracker.Infrastructure.csproj" />
   <Project Path="AirsoftEquipmentTracker.Tests/AirsoftEquipmentTracker.Tests.csproj" />
 </Solution>

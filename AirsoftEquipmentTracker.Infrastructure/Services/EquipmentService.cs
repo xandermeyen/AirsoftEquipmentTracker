@@ -1,8 +1,8 @@
-using AirsoftEquipmentTracker.Data;
-using AirsoftEquipmentTracker.Models;
+using AirsoftEquipmentTracker.Core.Models;
+using AirsoftEquipmentTracker.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace AirsoftEquipmentTracker.Services;
+namespace AirsoftEquipmentTracker.Infrastructure.Services;
 
 public class EquipmentService
 {

@@ -36,14 +36,25 @@ It started as a way to practice full-stack .NET properly, end to end, instead of
 
 ## How it's put together
 
-Nothing exotic, but I tried to keep the layers clean:
+The solution is split into three projects, so the data and logic can be shared with a Web API later:
 
-- `Models/` holds the entities: `EquipmentItem`, `Brand`, `Category` and `ApplicationUser`, plus the `EquipmentStatus` enum and the `NotInFutureAttribute` validator. Items point at a brand and a category with `DeleteBehavior.Restrict`, so you can't delete a brand or category that's still in use.
-- `Data/AppDbContext.cs` extends `IdentityDbContext`, configures the relationships and seeds brands and categories.
-- `Services/EquipmentService.cs` is the only thing the pages talk to for data. Every item query is scoped to the logged-in user. It uses `IDbContextFactory` rather than a single injected context, which is the recommended approach for Blazor Server because components live longer than a normal request.
-- `Services/ImageService.cs` validates, saves and deletes uploaded photos.
+**`AirsoftEquipmentTracker.Core`** has the domain models and no package dependencies at all.
+- `EquipmentItem`, `Brand`, `Category`, the `EquipmentStatus` enum, the `NotInFutureAttribute` validator, `DashboardStats` and `AppRoles`.
+- An item only stores the `UserId` of its owner, so Core doesn't need to know about Identity.
+
+**`AirsoftEquipmentTracker.Infrastructure`** has everything that touches the database or the file system.
+- `Data/AppDbContext.cs` extends `IdentityDbContext`, configures the relationships and seeds brands and categories. Items point at a brand and a category with `DeleteBehavior.Restrict`, so you can't delete a brand or category that's still in use.
+- `Identity/ApplicationUser.cs` is the Identity user.
+- `Services/EquipmentService.cs` is the only thing the pages talk to for data. Every item query is scoped to the logged-in user, and it also calculates the dashboard numbers. It uses `IDbContextFactory` rather than a single injected context, which is the recommended approach for Blazor Server because components live longer than a normal request.
+- `Services/ImageService.cs` validates, saves and deletes uploaded photos. It works on a plain `Stream`, so it isn't tied to Blazor.
+- `Migrations/` has the EF Core migrations.
+- `DependencyInjection.cs` registers all of the above with one `AddInfrastructure(...)` call.
+
+**`AirsoftEquipmentTracker`** is the Blazor Server app.
 - `Components/Pages/` contains the Blazor pages: Dashboard, the equipment list, the add/edit form and the brand and category manager.
 - `Pages/Account/` holds the Razor Pages for login, register, logout and the forgot/reset password flow. These run outside the Blazor circuit because the auth cookie has to be set on a normal HTTP request.
+
+Brands and categories are shared between all users, so only accounts with the `Admin` role can rename or delete them. Everyone can still add new ones from the equipment form.
 
 The connection string lives in user-secrets, not in `appsettings.json`, so no credentials end up in the repo.
 
@@ -52,9 +63,12 @@ The connection string lives in user-secrets, not in `appsettings.json`, so no cr
 `AirsoftEquipmentTracker.Tests` covers `EquipmentService` against a real SQLite in-memory database, so relationships and constraints behave like they do in production. Among other things it checks:
 
 - adding, updating and deleting items
-- that a user can't read or delete someone else's items
+- that a user can't read, update or delete someone else's items
 - that brands and categories are deduplicated and trimmed
 - that a brand or category in use can't be deleted or renamed to a duplicate
+- the dashboard numbers
+
+`ImageService` has its own tests for validation, saving and deleting, including a check that a path with `../` can't delete files outside the uploads folder.
 
 Run them with:
 
@@ -80,13 +94,19 @@ You'll need the .NET 10 SDK and Docker.
      "Server=localhost,1433;Database=AirsoftTracker;User Id=sa;Password=Your_password123;TrustServerCertificate=True"
    ```
 
-3. Apply the migrations to create the database:
+   To make your own account an admin (needed to manage brands and categories), add your email too:
 
    ```bash
-   dotnet ef database update
+   dotnet user-secrets set "AdminEmail" "you@example.com"
    ```
 
-4. Run the app:
+3. From the repository root, apply the migrations to create the database. The migrations live in the Infrastructure project, so EF needs both projects:
+
+   ```bash
+   dotnet ef database update --project AirsoftEquipmentTracker.Infrastructure --startup-project AirsoftEquipmentTracker
+   ```
+
+4. From the `AirsoftEquipmentTracker` folder, run the app:
 
    ```bash
    dotnet run

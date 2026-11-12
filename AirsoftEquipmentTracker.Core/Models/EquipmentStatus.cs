@@ -1,4 +1,4 @@
-namespace AirsoftEquipmentTracker.Models
+namespace AirsoftEquipmentTracker.Core.Models
 {
     // Status van een equipment item.
     // Owned telt mee in de dashboard-totalen, Wishlist wordt apart getoond.

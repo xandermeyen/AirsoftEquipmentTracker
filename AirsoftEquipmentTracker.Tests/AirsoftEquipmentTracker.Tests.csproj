@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AirsoftEquipmentTracker\AirsoftEquipmentTracker.csproj" />
+    <ProjectReference Include="..\AirsoftEquipmentTracker.Infrastructure\AirsoftEquipmentTracker.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

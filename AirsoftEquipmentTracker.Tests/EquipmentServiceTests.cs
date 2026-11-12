@@ -1,5 +1,5 @@
-using AirsoftEquipmentTracker.Models;
-using AirsoftEquipmentTracker.Services;
+using AirsoftEquipmentTracker.Core.Models;
+using AirsoftEquipmentTracker.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 

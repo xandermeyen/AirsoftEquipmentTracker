@@ -2,83 +2,83 @@
 
 #nullable disable
 
-namespace AirsoftEquipmentTracker.Migrations
+namespace AirsoftEquipmentTracker.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddEquipmentImage : Migration
+    public partial class AddEquipmentStatus : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "ImagePath",
+            migrationBuilder.AddColumn<int>(
+                name: "Status",
                 table: "EquipmentItems",
-                type: "nvarchar(260)",
-                maxLength: 260,
-                nullable: true);
+                type: "int",
+                nullable: false,
+                defaultValue: 0);
 
             migrationBuilder.UpdateData(
                 table: "EquipmentItems",
                 keyColumn: "Id",
                 keyValue: 1,
-                column: "ImagePath",
-                value: null);
+                column: "Status",
+                value: 0);
 
             migrationBuilder.UpdateData(
                 table: "EquipmentItems",
                 keyColumn: "Id",
                 keyValue: 2,
-                column: "ImagePath",
-                value: null);
+                column: "Status",
+                value: 0);
 
             migrationBuilder.UpdateData(
                 table: "EquipmentItems",
                 keyColumn: "Id",
                 keyValue: 3,
-                column: "ImagePath",
-                value: null);
+                column: "Status",
+                value: 0);
 
             migrationBuilder.UpdateData(
                 table: "EquipmentItems",
                 keyColumn: "Id",
                 keyValue: 4,
-                column: "ImagePath",
-                value: null);
+                column: "Status",
+                value: 0);
 
             migrationBuilder.UpdateData(
                 table: "EquipmentItems",
                 keyColumn: "Id",
                 keyValue: 5,
-                column: "ImagePath",
-                value: null);
+                column: "Status",
+                value: 0);
 
             migrationBuilder.UpdateData(
                 table: "EquipmentItems",
                 keyColumn: "Id",
                 keyValue: 6,
-                column: "ImagePath",
-                value: null);
+                column: "Status",
+                value: 0);
 
             migrationBuilder.UpdateData(
                 table: "EquipmentItems",
                 keyColumn: "Id",
                 keyValue: 7,
-                column: "ImagePath",
-                value: null);
+                column: "Status",
+                value: 0);
 
             migrationBuilder.UpdateData(
                 table: "EquipmentItems",
                 keyColumn: "Id",
                 keyValue: 8,
-                column: "ImagePath",
-                value: null);
+                column: "Status",
+                value: 0);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "ImagePath",
+                name: "Status",
                 table: "EquipmentItems");
         }
     }

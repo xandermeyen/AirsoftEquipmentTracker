@@ -1,7 +1,5 @@
-@using AirsoftEquipmentTracker.Models
-@using AirsoftEquipmentTracker.Services
-@inject AirsoftEquipmentTracker.Services.EquipmentService EquipmentService
-@inject AirsoftEquipmentTracker.Services.ImageService Images
+@inject EquipmentService EquipmentService
+@inject ImageService Images
 
 <EditForm Model="Model" OnValidSubmit="HandleSubmit">
     <DataAnnotationsValidator />

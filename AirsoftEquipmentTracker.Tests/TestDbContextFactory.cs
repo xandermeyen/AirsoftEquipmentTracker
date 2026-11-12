@@ -1,5 +1,5 @@
-using AirsoftEquipmentTracker.Data;
-using AirsoftEquipmentTracker.Models;
+using AirsoftEquipmentTracker.Infrastructure.Data;
+using AirsoftEquipmentTracker.Infrastructure.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 

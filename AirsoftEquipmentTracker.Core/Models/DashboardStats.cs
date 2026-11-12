@@ -1,4 +1,4 @@
-namespace AirsoftEquipmentTracker.Models;
+namespace AirsoftEquipmentTracker.Core.Models;
 
 // Cijfers voor het dashboard van één gebruiker.
 // Totalen tellen alleen Owned items mee; de wishlist heeft een eigen totaal.

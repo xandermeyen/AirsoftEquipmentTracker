@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace AirsoftEquipmentTracker.Models;
+namespace AirsoftEquipmentTracker.Infrastructure.Identity;
 
 public class ApplicationUser : IdentityUser
 {

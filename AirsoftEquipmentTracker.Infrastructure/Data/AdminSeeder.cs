@@ -10,6 +10,12 @@ namespace AirsoftEquipmentTracker.Infrastructure.Data;
 // Die waarde komt uit de config ("AdminEmail" in user-secrets, niet in appsettings.json).
 public static class AdminSeeder
 {
+    // True als email het geconfigureerde admin-adres is (hoofdletterongevoelig).
+    // Gebruikt bij registratie in zowel de Blazor-app als de API.
+    public static bool IsAdminEmail(string? adminEmail, string email) =>
+        !string.IsNullOrWhiteSpace(adminEmail) &&
+        string.Equals(adminEmail, email, StringComparison.OrdinalIgnoreCase);
+
     public static async Task EnsureAdminAsync(IServiceProvider services, string? adminEmail, ILogger logger)
     {
         using var scope = services.CreateScope();

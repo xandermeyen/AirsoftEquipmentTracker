@@ -1,8 +1,10 @@
+using AirsoftEquipmentTracker.Core.Interfaces;
+
 namespace AirsoftEquipmentTracker.Infrastructure.Services;
 
 // Bewaart en verwijdert foto's voor equipment items.
 // Werkt met een gewone Stream, zodat zowel Blazor (IBrowserFile) als een API (IFormFile) hem kan gebruiken.
-public class ImageService
+public class ImageService : IImageService
 {
     public const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
 

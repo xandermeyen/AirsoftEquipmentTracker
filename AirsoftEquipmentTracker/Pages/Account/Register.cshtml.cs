@@ -1,4 +1,5 @@
 using AirsoftEquipmentTracker.Core.Models;
+using AirsoftEquipmentTracker.Infrastructure.Data;
 using AirsoftEquipmentTracker.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -58,9 +59,7 @@ public class RegisterModel : PageModel
         if (result.Succeeded)
         {
             // Registreert het account uit "AdminEmail" zich, dan krijgt het meteen de Admin-rol
-            var adminEmail = _configuration["AdminEmail"];
-            if (!string.IsNullOrWhiteSpace(adminEmail) &&
-                string.Equals(adminEmail, Input.Email, StringComparison.OrdinalIgnoreCase))
+            if (AdminSeeder.IsAdminEmail(_configuration["AdminEmail"], Input.Email))
             {
                 await _userManager.AddToRoleAsync(user, AppRoles.Admin);
             }

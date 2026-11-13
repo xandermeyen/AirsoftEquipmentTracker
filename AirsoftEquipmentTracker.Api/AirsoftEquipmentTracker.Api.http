@@ -1,0 +1,32 @@
+# Testrequests voor de API. Open dit bestand in Visual Studio of Rider (of VS Code
+# met de REST Client-extensie) en klik op "Send Request" boven een request.
+# Start eerst de API met het https-profiel.
+
+@baseUrl = https://localhost:7104
+
+### Registreren
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "displayName": "Test User",
+  "email": "test@example.com",
+  "password": "Password1",
+  "confirmPassword": "Password1"
+}
+
+### Inloggen (kopieer de token uit het antwoord naar @token hieronder)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Password1"
+}
+
+###
+@token = plak-hier-je-token
+
+### Ingelogde gebruiker opvragen (geeft 401 zonder geldige token)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}

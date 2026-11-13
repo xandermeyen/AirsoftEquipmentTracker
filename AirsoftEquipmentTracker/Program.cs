@@ -19,15 +19,8 @@ builder.Services.AddInfrastructure(
         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' ontbreekt."),
     Path.Combine(builder.Environment.WebRootPath, ImageService.UploadsFolderName));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-{
-    options.SignIn.RequireConfirmedAccount = false;
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 8;
-})
+// Wachtwoordregels staan in IdentityConfig, zodat de API exact dezelfde gebruikt
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(IdentityConfig.Configure)
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 

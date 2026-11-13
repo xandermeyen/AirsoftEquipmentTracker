@@ -78,3 +78,52 @@ Content-Type: application/json
 ### Item verwijderen
 DELETE {{baseUrl}}/api/equipment/1
 Authorization: Bearer {{token}}
+
+### Foto uploaden voor item 1 (pas het pad naar een eigen .jpg/.png/.webp aan)
+POST {{baseUrl}}/api/equipment/1/image
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="photo.jpg"
+Content-Type: image/jpeg
+
+< C:/pad/naar/photo.jpg
+--boundary--
+
+### Foto verwijderen van item 1
+DELETE {{baseUrl}}/api/equipment/1/image
+Authorization: Bearer {{token}}
+
+### ---------- Dashboard ----------
+
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer {{token}}
+
+### ---------- Brands en categorieën ----------
+
+### Alle brands
+GET {{baseUrl}}/api/brands
+Authorization: Bearer {{token}}
+
+### Brand toevoegen (iedereen). Bestaat de naam al, dan krijg je de bestaande terug
+POST {{baseUrl}}/api/brands
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "name": "G&G Armament" }
+
+### Brand hernoemen (enkel Admin, anders 403)
+PUT {{baseUrl}}/api/brands/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "name": "Novritsch" }
+
+### Brand verwijderen (enkel Admin; 409 als hij nog gebruikt wordt)
+DELETE {{baseUrl}}/api/brands/9
+Authorization: Bearer {{token}}
+
+### Alle categorieën
+GET {{baseUrl}}/api/categories
+Authorization: Bearer {{token}}

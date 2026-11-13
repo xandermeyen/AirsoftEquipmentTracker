@@ -2,6 +2,7 @@ using System.Security.Claims;
 using AirsoftEquipmentTracker.Api.DTOs.Equipment;
 using AirsoftEquipmentTracker.Core.Interfaces;
 using AirsoftEquipmentTracker.Core.Models;
+using AirsoftEquipmentTracker.Infrastructure.Services;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -98,6 +99,73 @@ public class EquipmentController(IEquipmentService equipmentService, IImageServi
 
         // Foto pas weg nadat het item verwijderd is, net als in de Blazor-app
         imageService.DeleteImage(item.ImagePath);
+
+        return NoContent();
+    }
+
+    // Foto uploaden of vervangen. Verwacht multipart/form-data met een veld "file".
+    // De foto is daarna bereikbaar op /{imagePath}, bv. /uploads/abc.jpg.
+    [HttpPost("{id:int}/image")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType<EquipmentDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<EquipmentDto>> UploadImage(int id, IFormFile file)
+    {
+        var item = await equipmentService.GetEquipmentByIdAsync(id, UserId);
+        if (item is null)
+            return NotFound(new { error = $"Equipment item {id} not found." });
+
+        var imageError = ImageService.Validate(file.FileName, file.Length);
+        if (imageError is not null)
+        {
+            ModelState.AddModelError(nameof(file), imageError);
+            return ValidationProblem(ModelState);
+        }
+
+        // Zelfde volgorde als in de Blazor-app: nieuwe foto eerst bewaren,
+        // de oude pas verwijderen nadat het item zelf opgeslagen is.
+        var oldImage = item.ImagePath;
+        string newImage;
+        await using (var stream = file.OpenReadStream())
+        {
+            newImage = await imageService.SaveImageAsync(stream, file.FileName, file.Length);
+        }
+
+        try
+        {
+            item.ImagePath = newImage;
+            await equipmentService.UpdateEquipmentAsync(item, UserId);
+        }
+        catch
+        {
+            // Opslaan mislukt: nieuwe foto opruimen, de oude blijft gewoon staan
+            imageService.DeleteImage(newImage);
+            throw;
+        }
+
+        imageService.DeleteImage(oldImage);
+
+        var updated = await equipmentService.GetEquipmentByIdAsync(id, UserId);
+        return Ok(updated!.Adapt<EquipmentDto>());
+    }
+
+    [HttpDelete("{id:int}/image")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteImage(int id)
+    {
+        var item = await equipmentService.GetEquipmentByIdAsync(id, UserId);
+        if (item is null)
+            return NotFound(new { error = $"Equipment item {id} not found." });
+
+        var oldImage = item.ImagePath;
+        if (oldImage is null)
+            return NoContent();
+
+        item.ImagePath = null;
+        await equipmentService.UpdateEquipmentAsync(item, UserId);
+        imageService.DeleteImage(oldImage);
 
         return NoContent();
     }

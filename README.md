@@ -36,15 +36,16 @@ It started as a way to practice full-stack .NET properly, end to end, instead of
 
 ## How it's put together
 
-The solution is split into three projects, so the data and logic can be shared with a Web API later:
+The solution has a Blazor Server app and a Web API that share the same data and logic:
 
 **`AirsoftEquipmentTracker.Core`** has the domain models and no package dependencies at all.
 - `EquipmentItem`, `Brand`, `Category`, the `EquipmentStatus` enum, the `NotInFutureAttribute` validator, `DashboardStats` and `AppRoles`.
 - An item only stores the `UserId` of its owner, so Core doesn't need to know about Identity.
+- `Interfaces/` has `IEquipmentService` and `IImageService`. The Blazor app and the API depend on these, not on the implementations, so they can be mocked in tests.
 
 **`AirsoftEquipmentTracker.Infrastructure`** has everything that touches the database or the file system.
 - `Data/AppDbContext.cs` extends `IdentityDbContext`, configures the relationships and seeds brands and categories. Items point at a brand and a category with `DeleteBehavior.Restrict`, so you can't delete a brand or category that's still in use.
-- `Identity/ApplicationUser.cs` is the Identity user.
+- `Identity/ApplicationUser.cs` is the Identity user, and `IdentityConfig.cs` holds the password rules both apps use.
 - `Services/EquipmentService.cs` is the only thing the pages talk to for data. Every item query is scoped to the logged-in user, and it also calculates the dashboard numbers. It uses `IDbContextFactory` rather than a single injected context, which is the recommended approach for Blazor Server because components live longer than a normal request.
 - `Services/ImageService.cs` validates, saves and deletes uploaded photos. It works on a plain `Stream`, so it isn't tied to Blazor.
 - `Migrations/` has the EF Core migrations.
@@ -53,6 +54,14 @@ The solution is split into three projects, so the data and logic can be shared w
 **`AirsoftEquipmentTracker`** is the Blazor Server app.
 - `Components/Pages/` contains the Blazor pages: Dashboard, the equipment list, the add/edit form and the brand and category manager.
 - `Pages/Account/` holds the Razor Pages for login, register, logout and the forgot/reset password flow. These run outside the Blazor circuit because the auth cookie has to be set on a normal HTTP request.
+
+**`AirsoftEquipmentTracker.Api`** is an ASP.NET Core Web API on top of the same services.
+- Authentication with JWT: `POST /api/auth/register`, `POST /api/auth/login` (returns a token) and `GET /api/auth/me`.
+- `TokenService` creates the tokens; the settings are validated at startup, so a missing or too short secret fails right away.
+- `GlobalExceptionHandler` turns exceptions into JSON responses with the right status code.
+- In development, `/scalar` has an interactive API reference, and `AirsoftEquipmentTracker.Api.http` has ready-made test requests.
+
+I deliberately didn't add a generic repository and unit of work on top of EF Core. `DbContext` already is a unit of work, and Blazor Server needs `IDbContextFactory` with short-lived contexts, which doesn't fit a unit of work that holds one context for the whole request. `EquipmentService` plays the role of the service layer instead.
 
 Brands and categories are shared between all users, so only accounts with the `Admin` role can rename or delete them. Everyone can still add new ones from the equipment form.
 
@@ -113,6 +122,17 @@ You'll need the .NET 10 SDK and Docker.
    ```
 
 Open the URL the console prints and register an account. Brands and categories are already seeded, so you can start adding gear right away.
+
+### Running the API
+
+The API shares its user-secrets with the Blazor app, so the connection string and `AdminEmail` are already there. It only needs a secret for signing tokens (at least 32 characters):
+
+```bash
+dotnet user-secrets set "Jwt:Secret" "<a long random string>" --project AirsoftEquipmentTracker.Api
+dotnet run --project AirsoftEquipmentTracker.Api
+```
+
+Then open `/scalar` on the URL the console prints for the API reference.
 
 ## What I learned
 

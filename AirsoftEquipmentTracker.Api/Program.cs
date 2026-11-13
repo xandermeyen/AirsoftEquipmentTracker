@@ -1,0 +1,133 @@
+using System.Security.Claims;
+using System.Text;
+using AirsoftEquipmentTracker.Api.Middleware;
+using AirsoftEquipmentTracker.Api.Services;
+using AirsoftEquipmentTracker.Api.Settings;
+using AirsoftEquipmentTracker.Infrastructure;
+using AirsoftEquipmentTracker.Infrastructure.Data;
+using AirsoftEquipmentTracker.Infrastructure.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddOpenApi();
+
+// Exceptions worden centraal afgehandeld (zie GlobalExceptionHandler)
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+// Database en services, exact dezelfde als in de Blazor-app.
+// Uploads:Path is relatief tegenover dit project; standaard wijst het naar wwwroot/uploads
+// van de Blazor-app, zodat beide apps dezelfde foto's gebruiken.
+var uploadsFolder = Path.GetFullPath(
+    builder.Configuration["Uploads:Path"]
+        ?? throw new InvalidOperationException("Uploads:Path ontbreekt in de configuratie."),
+    builder.Environment.ContentRootPath);
+
+builder.Services.AddInfrastructure(
+    builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' ontbreekt."),
+    uploadsFolder);
+
+// Identity zonder cookies: de API werkt enkel met JWT-tokens
+builder.Services
+    .AddIdentityCore<ApplicationUser>(IdentityConfig.Configure)
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
+
+// JWT-instellingen: gebonden en gevalideerd bij het opstarten,
+// zodat een ontbrekende of te korte secret meteen opvalt
+builder.Services
+    .AddOptions<JwtSettings>()
+    .Bind(builder.Configuration.GetSection(JwtSettings.SectionName))
+    .Validate(s => Encoding.UTF8.GetByteCount(s.Secret) >= 32,
+              "Jwt:Secret moet minstens 32 bytes lang zijn (zet hem in user-secrets).")
+    .Validate(s => !string.IsNullOrWhiteSpace(s.Issuer) && !string.IsNullOrWhiteSpace(s.Audience),
+              "Jwt:Issuer en Jwt:Audience zijn verplicht.")
+    .ValidateOnStart();
+
+builder.Services.AddSingleton<TokenService>();
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer();
+
+// JwtBearer configureren met de gevalideerde JwtSettings
+builder.Services
+    .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtSettings>>((options, settings) =>
+    {
+        var s = settings.Value;
+
+        // Claims niet hernoemen naar de lange Microsoft-namen
+        options.MapInboundClaims = false;
+        options.IncludeErrorDetails = builder.Environment.IsDevelopment();
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(s.Secret)),
+            ValidIssuer = s.Issuer,
+            ValidAudience = s.Audience,
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+            ClockSkew = TimeSpan.Zero,
+            NameClaimType = "name",
+            RoleClaimType = ClaimTypes.Role
+        };
+
+        // Duidelijke JSON-foutmeldingen in plaats van een lege 401/403
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return context.Response.WriteAsJsonAsync(
+                    new { error = "Not authenticated. The token is missing or invalid." });
+            },
+            OnForbidden = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return context.Response.WriteAsJsonAsync(
+                    new { error = "Access denied. You don't have the required role." });
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+var app = builder.Build();
+
+// Admin-rol aanmaken en toekennen aan "AdminEmail", net als in de Blazor-app
+try
+{
+    await AdminSeeder.EnsureAdminAsync(app.Services, app.Configuration["AdminEmail"], app.Logger);
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex, "Kon de Admin-rol niet instellen.");
+}
+
+app.UseExceptionHandler();
+
+if (app.Environment.IsDevelopment())
+{
+    // OpenAPI-document op /openapi/v1.json en een testpagina op /scalar
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();

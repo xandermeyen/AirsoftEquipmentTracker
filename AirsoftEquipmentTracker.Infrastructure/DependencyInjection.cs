@@ -1,3 +1,4 @@
+using AirsoftEquipmentTracker.Core.Interfaces;
 using AirsoftEquipmentTracker.Infrastructure.Data;
 using AirsoftEquipmentTracker.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -17,10 +18,11 @@ public static class DependencyInjection
         services.AddDbContextFactory<AppDbContext>(options =>
             options.UseSqlServer(connectionString));
 
-        services.AddSingleton<EquipmentService>();
+        // Geregistreerd op de interface, zodat Blazor en de API ervan afhangen en niet van de implementatie
+        services.AddSingleton<IEquipmentService, EquipmentService>();
 
         // ImageService krijgt alleen een map mee, zodat hij niet afhangt van ASP.NET zelf
-        services.AddSingleton(new ImageService(uploadsFolder));
+        services.AddSingleton<IImageService>(new ImageService(uploadsFolder));
 
         return services;
     }

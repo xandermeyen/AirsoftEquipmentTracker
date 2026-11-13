@@ -58,6 +58,9 @@ The solution has a Blazor Server app and a Web API that share the same data and 
 **`AirsoftEquipmentTracker.Api`** is an ASP.NET Core Web API on top of the same services.
 - Authentication with JWT: `POST /api/auth/register`, `POST /api/auth/login` (returns a token) and `GET /api/auth/me`.
 - `GET/POST /api/equipment` and `GET/PUT/DELETE /api/equipment/{id}` for the logged-in user's own items, with an optional `?status=` filter. The user id always comes from the token, so asking for someone else's item just returns 404.
+- `POST/DELETE /api/equipment/{id}/image` uploads or removes a photo. Photos are served from `/uploads/...`, the same folder the Blazor app uses.
+- `GET /api/dashboard` returns the same numbers as the Blazor dashboard.
+- `GET/POST /api/brands` and `/api/categories` for everyone; renaming and deleting (`PUT`/`DELETE`) is admin-only, and returns 409 for a duplicate name or a brand that's still in use.
 - Entities never leave the API: controllers return DTOs, mapped with Mapster (`Configuration/MapperProfile.cs`). The request DTO has no `Id`, `UserId` or `ImagePath`, so a client can't set those.
 - `TokenService` creates the tokens; the settings are validated at startup, so a missing or too short secret fails right away.
 - `GlobalExceptionHandler` turns exceptions into JSON responses with the right status code.

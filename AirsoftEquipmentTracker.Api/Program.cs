@@ -9,10 +9,13 @@ using AirsoftEquipmentTracker.Api.Settings;
 using AirsoftEquipmentTracker.Infrastructure;
 using AirsoftEquipmentTracker.Infrastructure.Data;
 using AirsoftEquipmentTracker.Infrastructure.Identity;
+using AirsoftEquipmentTracker.Infrastructure.Services;
 using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -26,6 +29,10 @@ builder.Services
     .AddJsonOptions(options =>
         // Enums als tekst ("Wishlist") in plaats van als getal (2), leesbaarder voor een frontend
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+// Duidelijke 400-meldingen, ook als de JSON zelf ongeldig is (zie ValidationResponseFactory)
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+    options.InvalidModelStateResponseFactory = ValidationResponseFactory.Create);
 
 // OpenAPI-document, met JWT zodat Scalar een veld voor het token toont
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
@@ -140,6 +147,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Foto's serveren op /uploads/..., uit dezelfde map als de Blazor-app
+Directory.CreateDirectory(uploadsFolder);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsFolder),
+    RequestPath = "/" + ImageService.UploadsFolderName
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

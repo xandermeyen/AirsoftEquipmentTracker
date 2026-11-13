@@ -15,6 +15,7 @@ namespace AirsoftEquipmentTracker.Api.Controllers;
 // dus een ModelState.IsValid-check in elke actie is niet nodig.
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
 public class AuthController(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,

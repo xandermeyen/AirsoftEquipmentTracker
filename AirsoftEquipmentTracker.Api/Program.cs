@@ -1,21 +1,37 @@
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
+using AirsoftEquipmentTracker.Api.Configuration;
 using AirsoftEquipmentTracker.Api.Middleware;
 using AirsoftEquipmentTracker.Api.Services;
 using AirsoftEquipmentTracker.Api.Settings;
 using AirsoftEquipmentTracker.Infrastructure;
 using AirsoftEquipmentTracker.Infrastructure.Data;
 using AirsoftEquipmentTracker.Infrastructure.Identity;
+using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services
+    .AddControllers(options =>
+        // Routes in kleine letters: /api/equipment in plaats van /api/Equipment
+        options.Conventions.Add(new RouteTokenTransformerConvention(new LowercaseRouteTransformer())))
+    .AddJsonOptions(options =>
+        // Enums als tekst ("Wishlist") in plaats van als getal (2), leesbaarder voor een frontend
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+// OpenAPI-document, met JWT zodat Scalar een veld voor het token toont
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
+
+// Mapster: zoekt alle IRegister-klassen (zoals MapperProfile) in dit project
+TypeAdapterConfig.GlobalSettings.Scan(Assembly.GetExecutingAssembly());
 
 // Exceptions worden centraal afgehandeld (zie GlobalExceptionHandler)
 builder.Services.AddProblemDetails();

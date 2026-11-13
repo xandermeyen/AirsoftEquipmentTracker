@@ -57,9 +57,11 @@ The solution has a Blazor Server app and a Web API that share the same data and 
 
 **`AirsoftEquipmentTracker.Api`** is an ASP.NET Core Web API on top of the same services.
 - Authentication with JWT: `POST /api/auth/register`, `POST /api/auth/login` (returns a token) and `GET /api/auth/me`.
+- `GET/POST /api/equipment` and `GET/PUT/DELETE /api/equipment/{id}` for the logged-in user's own items, with an optional `?status=` filter. The user id always comes from the token, so asking for someone else's item just returns 404.
+- Entities never leave the API: controllers return DTOs, mapped with Mapster (`Configuration/MapperProfile.cs`). The request DTO has no `Id`, `UserId` or `ImagePath`, so a client can't set those.
 - `TokenService` creates the tokens; the settings are validated at startup, so a missing or too short secret fails right away.
 - `GlobalExceptionHandler` turns exceptions into JSON responses with the right status code.
-- In development, `/scalar` has an interactive API reference, and `AirsoftEquipmentTracker.Api.http` has ready-made test requests.
+- In development, `/scalar` has an interactive API reference where you paste your token once, and `AirsoftEquipmentTracker.Api.http` has ready-made test requests.
 
 I deliberately didn't add a generic repository and unit of work on top of EF Core. `DbContext` already is a unit of work, and Blazor Server needs `IDbContextFactory` with short-lived contexts, which doesn't fit a unit of work that holds one context for the whole request. `EquipmentService` plays the role of the service layer instead.
 

@@ -30,3 +30,51 @@ Content-Type: application/json
 ### Ingelogde gebruiker opvragen (geeft 401 zonder geldige token)
 GET {{baseUrl}}/api/auth/me
 Authorization: Bearer {{token}}
+
+### ---------- Equipment (alle requests hieronder hebben een token nodig) ----------
+
+### Al je equipment
+GET {{baseUrl}}/api/equipment
+Authorization: Bearer {{token}}
+
+### Enkel je wishlist
+GET {{baseUrl}}/api/equipment?status=Wishlist
+Authorization: Bearer {{token}}
+
+### Eén item (vervang 1 door een id uit de lijst)
+GET {{baseUrl}}/api/equipment/1
+Authorization: Bearer {{token}}
+
+### Item toevoegen (brand 1 = Novritsch, category 1 = Primary)
+POST {{baseUrl}}/api/equipment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "SSG10 A3",
+  "brandId": 1,
+  "categoryId": 1,
+  "price": 449.99,
+  "purchaseDate": "2026-10-01",
+  "status": "Owned",
+  "notes": "Added via the API"
+}
+
+### Item aanpassen (vervang 1 door het id uit het antwoord hierboven)
+PUT {{baseUrl}}/api/equipment/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "SSG10 A3 (upgraded)",
+  "brandId": 1,
+  "categoryId": 1,
+  "price": 499.99,
+  "purchaseDate": "2026-10-01",
+  "status": "Owned",
+  "notes": "New hop-up"
+}
+
+### Item verwijderen
+DELETE {{baseUrl}}/api/equipment/1
+Authorization: Bearer {{token}}
